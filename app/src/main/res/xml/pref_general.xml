@@ -4,10 +4,9 @@
                   android:layout_height="match_parent">
 
     <PreferenceCategory
-            android:title="Second Category">
+            android:title="Pick sort order: ">
         <ListPreference
-                android:title="Pick sort order: "
-                android:key="listPref"
+                android:key="@string/pref_sort_key"
                 android:defaultValue="1"
                 android:entries="@array/sortOrder"
                 android:entryValues="@array/sortOrderValues" />

@@ -3,8 +3,8 @@
 <resources>
 
     <string-array name="sortOrder">
-        <item>Most Popular</item>
-        <item>Highest-Rated</item>
+        <item>@string/by_popularity</item>
+        <item>@string/by_rating</item>
     </string-array>
 
     <string-array name="sortOrderValues">
