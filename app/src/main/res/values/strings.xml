@@ -5,7 +5,13 @@
     <string name="title_activity_movie_detail">MovieDetailActivity</string>
     <string name="hello_world">Hello world!</string>
     <string name="title_activity_settings">SettingsActivity</string>
+
+
+
     <string name="pref_sort_key" translatable="false">sort</string>
-    <string name="by_rating">By rating</string>
-    <string name="by_popularity">By popularity</string>
+    <string name="pref_sort_rating" translatable="false">rating</string>
+    <string name="pref_sort_popularity" translatable="false">popularity.desc</string>
+    <string name="pref_sort_rating_label">By rating</string>
+    <string name="pref_sort_popularity_label">By popularity</string>
+    <string name="pref_sort_default" translatable="false">@string/pref_sort_popularity</string>
 </resources>

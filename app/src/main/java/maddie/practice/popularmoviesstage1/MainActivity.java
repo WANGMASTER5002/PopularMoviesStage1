@@ -14,11 +14,11 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                .add(R.id.fragment, new MoviesFragment())
-                .commit();
-        }
+//        if (savedInstanceState == null) {
+//            getSupportFragmentManager().beginTransaction()
+//                .add(R.id.fragment, new MoviesFragment())
+//                .commit();
+//        }
     }
 
 
@@ -36,7 +36,6 @@ public class MainActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspectin SimplifiableIfStatement
         if (id == R.id.action_settings) {
             startActivity(new Intent(this, SettingsActivity.class));
             return true;
