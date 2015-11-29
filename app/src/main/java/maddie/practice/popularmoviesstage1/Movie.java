@@ -1,6 +1,7 @@
 package maddie.practice.popularmoviesstage1;
 
 import android.graphics.Bitmap;
+
 import java.util.Date;
 
 /**
@@ -8,18 +9,32 @@ import java.util.Date;
  */
 public class Movie {
 
+    private long mId;
     private String mTitle;
-    private Bitmap mPoster;
-    private float mRating;
+    private String mPosterPath;
+    private double mRating;
+    private double mPopularity;
     private String mSynopsis;
     private Date mReleaseDate;
+    private Bitmap mPosterBitmap;
 
-    public Movie(String title, Bitmap poster, float rating, String synopsis, Date releaseDate) {
+    public Movie(long id, String title, String poster, double rating, double popularity, String synopsis, Date releaseDate) {
+        mId = id;
         mTitle = title;
-        mPoster = poster;
+        mPosterPath = poster;
         mRating = rating;
+        mPopularity = popularity;
         mSynopsis = synopsis;
         mReleaseDate = releaseDate;
+        mPosterBitmap = setPosterBitmapFromString(mPosterPath);
+    }
+
+    public long getId() {
+        return mId;
+    }
+
+    public void setId(long id) {
+        mId = id;
     }
 
     public String getTitle() {
@@ -30,20 +45,28 @@ public class Movie {
         mTitle = title;
     }
 
-    public Bitmap getPoster() {
-        return mPoster;
+    public String getPoster() {
+        return mPosterPath;
     }
 
-    public void setPoster(Bitmap poster) {
-        this.mPoster = poster;
+    public void setPoster(String poster) {
+        this.mPosterPath = poster;
     }
 
-    public float getRating() {
+    public double getRating() {
         return mRating;
     }
 
-    public void setRating(float rating) {
+    public void setRating(double rating) {
         this.mRating = rating;
+    }
+
+    public double getPopularity() {
+        return mPopularity;
+    }
+
+    public void setPopularity(double popularity) {
+        this.mPopularity = popularity;
     }
 
     public Date getReleaseDate() {
@@ -62,4 +85,12 @@ public class Movie {
         this.mSynopsis = synopsis;
     }
 
+    public Bitmap setPosterBitmapFromString(String path){
+        if(path == null) {
+            return null;
+        } else {
+           // Bitmap poster = new Bitmap();
+        }
+        return null;
+    }
 }

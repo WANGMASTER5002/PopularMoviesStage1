@@ -7,7 +7,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
-import android.text.format.Time;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,6 +27,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
 
 /**
  * Fragment holding GridView of movies returned from The Movie Database API
@@ -53,6 +55,7 @@ public class MoviesFragment extends Fragment {
             new ArrayAdapter<>(
                 getActivity(), // The current context (this activity)
                 R.layout.grid_item_movie, // The name of the layout ID.
+                R.id.grid_item_movie_poster,
                 new ArrayList<Movie>());
 
         View rootView = inflater.inflate(R.layout.fragment_movies, container, false);
@@ -89,59 +92,33 @@ public class MoviesFragment extends Fragment {
     }
 
 
-    public class FetchMoviesTask extends AsyncTask<String, Void, String[]> {
+    public class FetchMoviesTask extends AsyncTask<String, Void, Movie[]> {
 
         private final String LOG_TAG = FetchMoviesTask.class.getSimpleName();
 
-        /* The date/time conversion code is going to be moved outside the asynctask later,
-         * so for convenience we're breaking it out into its own method now.
-         */
-        private String getReadableDateString(long time){
-            // Because the API returns a unix timestamp (measured in seconds),
-            // it must be converted to milliseconds in order to be converted to valid date.
-            SimpleDateFormat shortenedDateFormat = new SimpleDateFormat("EEE MMM dd");
-            return shortenedDateFormat.format(time);
-        }
-
         /**
-         * Take the String representing the complete forecast in JSON Format and
-         * pull out the data we need to construct the Strings needed for the wireframes.
+         * Take the String representing the complete forecast in JSON Format and pull out the data we need to construct the Strings needed
+         * for the wireframes.
          *
-         * Fortunately parsing is easy:  constructor takes the JSON string and converts it
-         * into an Object hierarchy for us.
+         * Fortunately parsing is easy:  constructor takes the JSON string and converts it into an Object hierarchy for us.
          */
-        private String[] getMoviesDataFromJson(String moviesJsonStr, int numDays)
+        private Movie[] getMoviesFromJson(String moviesJsonStr)
             throws JSONException {
 
             // These are the names of the JSON objects that need to be extracted.
-            final String OWM_LIST = "list";
-            final String OWM_WEATHER = "weather";
-            final String OWM_TEMPERATURE = "temp";
-            final String OWM_MAX = "max";
-            final String OWM_MIN = "min";
-            final String OWM_DESCRIPTION = "main";
+            final String MDB_RESULTS = "results";
+            final String MDB_ID = "id";
+            final String MDB_TITLE = "title";
+            final String MDB_SYNOPSIS = "overview";
+            final String MDB_POPULARITY = "popularity";
+            final String MDB_RATING = "vote_average";
+            final String MDB_RELEASE_DATE = "release_date";
+            final String MDB_POSTER_PATH = "poster_path";
 
             JSONObject moviesJson = new JSONObject(moviesJsonStr);
-            JSONArray moviesArray = moviesJson.getJSONArray(OWM_LIST);
+            JSONArray moviesJsonArray = moviesJson.getJSONArray(MDB_RESULTS);
 
-            // OWM returns daily forecasts based upon the local time of the city that is being
-            // asked for, which means that we need to know the GMT offset to translate this data
-            // properly.
-
-            // Since this data is also sent in-order and the first day is always the
-            // current day, we're going to take advantage of that to get a nice
-            // normalized UTC date for all of our weather.
-
-            Time dayTime = new Time();
-            dayTime.setToNow();
-
-            // we start at the day returned by local time. Otherwise this is a mess.
-            int julianStartDay = Time.getJulianDay(System.currentTimeMillis(), dayTime.gmtoff);
-
-            // now we work exclusively in UTC
-            dayTime = new Time();
-
-            String[] resultStrs = new String[numDays];
+            Movie[] moviesArray = new Movie[moviesJsonArray.length()];
 
             // Data is fetched in Celsius by default.
             // If user prefers to see in Fahrenheit, convert the values here.
@@ -150,49 +127,91 @@ public class MoviesFragment extends Fragment {
             // we start storing the values in a database.
             SharedPreferences sharedPrefs =
                 PreferenceManager.getDefaultSharedPreferences(getActivity());
-            String unitType = sharedPrefs.getString(
+            String sortOrder = sharedPrefs.getString(
                 getString(R.string.pref_sort_key),
                 getString(R.string.pref_sort_default));
 
-            for(int i = 0; i < moviesArray.length(); i++) {
-                // For now, using the format "Day, description, hi/low"
-                String day;
-                String description;
-                String highAndLow;
+            for (int i = 0; i < moviesJsonArray.length(); i++) {
+                long id;
+                String title;
+                String synopsis;
+                String posterPath;
+                Date releaseDate;
+                double popularity;
+                double rating;
 
                 // Get the JSON object representing the day
-                JSONObject dayForecast = moviesArray.getJSONObject(i);
+                JSONObject movie = moviesJsonArray.getJSONObject(i);
 
-                // The date/time is returned as a long.  We need to convert that
-                // into something human-readable, since most people won't read "1400356800" as
-                // "this saturday".
-                long dateTime;
-                // Cheating to convert this to UTC time, which is what we want anyhow
-                dateTime = dayTime.setJulianDay(julianStartDay+i);
-                day = getReadableDateString(dateTime);
+                id = movie.getLong(MDB_ID);
+                title = movie.getString(MDB_TITLE);
+                synopsis = movie.getString(MDB_SYNOPSIS);
+                posterPath = movie.getString(MDB_POSTER_PATH);
+                releaseDate = getDateFromJson(movie.getString(MDB_RELEASE_DATE));
+                popularity = movie.getDouble(MDB_POPULARITY);
+                rating = movie.getDouble(MDB_RATING);
 
-                // description is in a child array called "weather", which is 1 element long.
-                JSONObject weatherObject = dayForecast.getJSONArray(OWM_WEATHER).getJSONObject(0);
-                description = weatherObject.getString(OWM_DESCRIPTION);
+                Movie currentMovie = new Movie(id, title, posterPath, rating, popularity, synopsis, releaseDate);
+                moviesArray[i] = currentMovie;
 
-                // Temperatures are in a child object called "temp".  Try not to name variables
-                // "temp" when working with temperature.  It confuses everybody.
-                JSONObject temperatureObject = dayForecast.getJSONObject(OWM_TEMPERATURE);
-                double high = temperatureObject.getDouble(OWM_MAX);
-                double low = temperatureObject.getDouble(OWM_MIN);
-
-                resultStrs[i] = day + " - " + description + " - ";
             }
-            return resultStrs;
 
+            moviesArray = sortMovies(moviesArray, sortOrder);
+
+            return moviesArray;
         }
-        @Override
-        protected String[] doInBackground(String... params) {
 
-            // If there's no zip code, there's nothing to look up.  Verify size of params.
-//            if (params.length == 0) {
-//                return null;
-//            }
+        protected Movie[] sortMovies(Movie[] originalMovies, String sortOrder) {
+
+            switch (sortOrder) {
+                case "popularity.desc":
+                    Arrays.sort(originalMovies, new Comparator<Movie>() {
+                        @Override
+                        public int compare(Movie lhs, Movie rhs) {
+                            if (lhs.getPopularity() > rhs.getPopularity()) {
+                                return 1;
+                            } else {
+                                return -1;
+                            }
+                        }
+                    });
+                    break;
+                case "vote_average.desc":
+                    Arrays.sort(originalMovies, new Comparator<Movie>() {
+                        @Override
+                        public int compare(Movie lhs, Movie rhs) {
+                            if (lhs.getRating() > rhs.getRating()) {
+                                return 1;
+                            } else {
+                                return -1;
+                            }
+                        }
+                    });
+                    break;
+                default:
+                    break;
+            }
+
+            return originalMovies;
+        }
+
+        protected Date getDateFromJson(String json) {
+            if (json == null) {
+                return null;
+            } else {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                try {
+                    Date date = dateFormat.parse(json);
+                    return date;
+                } catch (Exception e) {
+                    Log.e(LOG_TAG, e.getMessage());
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected Movie[] doInBackground(String... params) {
 
             // These two need to be declared outside the try/catch
             // so that they can be closed in the finally block.
@@ -200,7 +219,7 @@ public class MoviesFragment extends Fragment {
             BufferedReader reader = null;
 
             // Will contain the raw JSON response as a string.
-            String forecastJsonStr = null;
+            String moviesJsonStr = null;
 
             String sort = getString(R.string.pref_sort_default);
 
@@ -210,7 +229,7 @@ public class MoviesFragment extends Fragment {
                 // http://openweathermap.org/API#forecast
                 final String MOVIES_BASE_URL =
                     "http://api.themoviedb.org/3/discover/movie?";
-                final String SORT_PARAM="sort_by";
+                final String SORT_PARAM = "sort_by";
                 final String API_KEY_PARAM = "api_key";
 
                 Uri builtUri = Uri.parse(MOVIES_BASE_URL).buildUpon()
@@ -246,8 +265,8 @@ public class MoviesFragment extends Fragment {
                     // Stream was empty.  No point in parsing.
                     return null;
                 }
-                forecastJsonStr = buffer.toString();
-                Log.v(LOG_TAG, forecastJsonStr);
+                moviesJsonStr = buffer.toString();
+                Log.v(LOG_TAG, moviesJsonStr);
             } catch (IOException e) {
                 Log.e(LOG_TAG, "Error ", e);
                 // If the code didn't successfully get the weather data, there's no point in attemping
@@ -266,30 +285,78 @@ public class MoviesFragment extends Fragment {
                 }
             }
 
-//            try {
-//                //return getMoviesDataFromJson(forecastJsonStr, numDays);
-//            } catch (JSONException e) {
-//                Log.e(LOG_TAG, e.getMessage(), e);
-//                e.printStackTrace();
-//            }
+            try {
+                return getMoviesFromJson(moviesJsonStr);
+            } catch (JSONException e) {
+                Log.e(LOG_TAG, e.getMessage(), e);
+                e.printStackTrace();
+            }
 
             // This will only happen if there was an error getting or parsing the forecast.
             return null;
         }
 
         @Override
-        protected void onPostExecute(String[] result) {
+        protected void onPostExecute(Movie[] result) {
             if (result != null) {
                 mAdapter.clear();
                 Log.v(LOG_TAG, result.toString());
-//                for(String dayForecastStr : result) {
-//                    mAdapter.add(dayForecastStr);
-//                }
-                // New data is back from the server.  Hooray!
+                for (Movie movie : result) {
+                    mAdapter.add(movie);
+                }
             }
         }
     }
 
 
-
+//    public class MovieArrayAdapter extends BaseAdapter {
+//
+//        ArrayList<Movie> array;
+//
+//        private Context context;
+//
+//        MovieArrayAdapter(Context context) {
+//            this.context = context;
+//            array = new ArrayList();
+//            Resources resources = context.getResources();
+//            String[] tempPlaces = resources.getStringArray(R.array.PlacesName);
+//            String[] tempDate = resources.getStringArray(R.array.ScheduleDate);
+//            String[] tempDescription = resources.getStringArray(R.array.Description);
+//            for (int count = 0; count < 4; count++) {
+//                Schedule tempSchedule = new Schedule(tempPlaces[count], tempDate[count], tempDescription[count]);
+//                list.add(tempSchedule);
+//            }
+//        }
+//
+//        @Override
+//        public int getCount() {
+//            return array.size();
+//        }
+//
+//        @Override
+//        public Object getItem(int position) {
+//            return array.get(position);
+//        }
+//
+//        @Override
+//        public long getItemId(int position) {
+//            return position;
+//        }
+//
+//        @Override
+//        public View getView(int position, View convertView, ViewGroup parent) {
+//            Schedule tempSchedule = array.get(position);
+//            if (convertView == null) {
+//                convertView = LayoutInflater.from(context).inflate(R.layout.grid_item_movie, parent, false);
+//            }
+//            ImageView moviePoster = (ImageView) convertView.findViewById(R.id.grid_item_movie_poster);
+//            TextView scheduleDate = (TextView) convertView.findViewById(R.id.schedule_date);
+//            TextView description = (TextView) convertView.findViewById(R.id.description);
+//            placeName.setText(tempSchedule.Place);
+//            scheduleDate.setText(tempSchedule.ScheduleTime);
+//            description.setText(tempSchedule.Description);
+//            return convertView;
+//        }
+//
+//    }
 }
