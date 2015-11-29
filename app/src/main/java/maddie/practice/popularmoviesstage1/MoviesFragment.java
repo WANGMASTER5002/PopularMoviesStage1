@@ -28,11 +28,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Date;
 
 /**
  * Fragment holding GridView of movies returned from The Movie Database API
@@ -70,7 +68,7 @@ public class MoviesFragment extends Fragment {
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
                 Movie movie = mAdapter.getItem(position);
                 Intent intent = new Intent(getActivity(), MovieDetailActivity.class)
-                    .putExtra(Intent.EXTRA_TEXT, movie.getId());
+                    .putExtra("movie Id", movie.getId());
                 startActivity(intent);
             }
         });
@@ -95,9 +93,6 @@ public class MoviesFragment extends Fragment {
         } else {
             moviesTask.execute(sortPref);
         }
-
-       // moviesTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, sortPref);
-       // moviesTask.execute(sortPref);
     }
 
 
@@ -117,11 +112,8 @@ public class MoviesFragment extends Fragment {
             // These are the names of the JSON objects that need to be extracted.
             final String MDB_RESULTS = "results";
             final String MDB_ID = "id";
-            final String MDB_TITLE = "title";
-            final String MDB_SYNOPSIS = "overview";
             final String MDB_POPULARITY = "popularity";
             final String MDB_RATING = "vote_average";
-            final String MDB_RELEASE_DATE = "release_date";
             final String MDB_POSTER_PATH = "poster_path";
 
             JSONObject moviesJson = new JSONObject(moviesJsonStr);
@@ -137,10 +129,7 @@ public class MoviesFragment extends Fragment {
 
             for (int i = 0; i < moviesJsonArray.length(); i++) {
                 long id;
-                String title;
-                String synopsis;
                 String posterPath;
-                Date releaseDate;
                 long popularity;
                 double rating;
 
@@ -148,14 +137,11 @@ public class MoviesFragment extends Fragment {
                 JSONObject movie = moviesJsonArray.getJSONObject(i);
 
                 id = movie.getLong(MDB_ID);
-                title = movie.getString(MDB_TITLE);
-                synopsis = movie.getString(MDB_SYNOPSIS);
                 posterPath = movie.getString(MDB_POSTER_PATH);
-                releaseDate = getDateFromJson(movie.getString(MDB_RELEASE_DATE));
                 popularity = movie.getLong(MDB_POPULARITY);
                 rating = movie.getDouble(MDB_RATING);
 
-                Movie currentMovie = new Movie(id, title, posterPath, rating, popularity, synopsis, releaseDate);
+                Movie currentMovie = new Movie(id, null, posterPath, rating, popularity, null, null);
                 moviesArray[i] = currentMovie;
 
             }
@@ -197,21 +183,6 @@ public class MoviesFragment extends Fragment {
             }
 
             return originalMovies;
-        }
-
-        protected Date getDateFromJson(String json) {
-            if (json == null) {
-                return null;
-            } else {
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                try {
-                    Date date = dateFormat.parse(json);
-                    return date;
-                } catch (Exception e) {
-                    Log.e(LOG_TAG, e.getMessage());
-                }
-            }
-            return null;
         }
 
         @Override

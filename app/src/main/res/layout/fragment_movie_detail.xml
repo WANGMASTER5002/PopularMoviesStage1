@@ -23,7 +23,8 @@
                     android:id="@+id/movie_details_release_date"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/release_date"/>
+                    android:text="@string/release_date"
+                    android:textStyle="bold"/>
 
             <TextView
                     android:id="@+id/movie_details_release_date_textview"
@@ -34,7 +35,8 @@
                     android:id="@+id/movie_details_vote_average"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/vote_average"/>
+                    android:text="@string/vote_average"
+                    android:textStyle="bold"/>
 
             <TextView
                     android:id="@+id/movie_details_vote_average_textview"
@@ -48,7 +50,7 @@
     </LinearLayout>
 
     <TextView
-            android:id="@+id/synopsis"
+            android:id="@+id/movie_details_synopsis_textview"
             android:layout_below="@id/movie_details_info_container"
             android:text="here is an example synopsis. super-villain kills innocent human, causes war with aliens. heavy on action, blood, and sex. sure to be a success."
             android:layout_width="match_parent"
