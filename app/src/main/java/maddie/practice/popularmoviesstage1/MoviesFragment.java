@@ -17,10 +17,6 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -74,7 +70,7 @@ public class MoviesFragment extends Fragment {
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
                 Movie movie = mAdapter.getItem(position);
                 Intent intent = new Intent(getActivity(), MovieDetailActivity.class)
-                    .putExtra(Intent.EXTRA_TEXT, movie.getTitle());
+                    .putExtra(Intent.EXTRA_TEXT, movie.getId());
                 startActivity(intent);
             }
         });
@@ -313,12 +309,6 @@ public class MoviesFragment extends Fragment {
         }
 
         @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            Toast.makeText(getContext(), "in on pre execute", Toast.LENGTH_LONG).show();
-        }
-
-        @Override
         protected void onPostExecute(Movie[] result) {
             if (result != null) {
                 mAdapter.clear();
@@ -330,7 +320,6 @@ public class MoviesFragment extends Fragment {
             }
         }
     }
-
 
     public class MovieArrayAdapter extends BaseAdapter {
 
@@ -369,15 +358,14 @@ public class MoviesFragment extends Fragment {
                 gridItem = convertView;
             }
             ImageView moviePoster = (ImageView) gridItem.findViewById(R.id.grid_item_movie_poster);
-            TextView movieTitle = (TextView) gridItem.findViewById(R.id.grid_item_movie_title);
 
             int width = mMovieGrid.getMeasuredWidth() / 3;
-            moviePoster.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            moviePoster.setMaxWidth(width);
-            moviePoster.setMinimumHeight(width);
+            moviePoster.setScaleType(ImageView.ScaleType.FIT_XY);
+//            moviePoster.setMaxWidth(width);
+//            moviePoster.setMinimumHeight(width);
+            moviePoster.setImageBitmap(tempMovie.getPosterBitmap());
 
-            Picasso.with(getContext()).load(tempMovie.getPosterPath()).into(moviePoster);
-            movieTitle.setText(tempMovie.getTitle());
+            //Picasso.with(getContext()).load(tempMovie.getPosterPath()).into(moviePoster);
 
             return gridItem;
         }

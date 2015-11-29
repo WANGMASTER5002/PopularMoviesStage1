@@ -14,4 +14,8 @@
     <string name="pref_sort_rating_label">By rating</string>
     <string name="pref_sort_popularity_label">By popularity</string>
     <string name="pref_sort_default" translatable="false">@string/pref_sort_popularity</string>
+
+    <string name="release_date">Release Date: </string>
+    <string name="vote_average">Vote Average: </string>
+
 </resources>
