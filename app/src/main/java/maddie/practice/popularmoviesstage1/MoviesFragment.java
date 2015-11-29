@@ -1,9 +1,11 @@
 package maddie.practice.popularmoviesstage1;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -12,8 +14,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.GridView;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -36,7 +43,10 @@ import java.util.Date;
  */
 public class MoviesFragment extends Fragment {
 
-    ArrayAdapter<Movie> mAdapter;
+    private final String LOG_TAG = MoviesFragment.class.getSimpleName();
+
+    MovieArrayAdapter mAdapter;
+    GridView mMovieGrid;
 
     public MoviesFragment() {
     }
@@ -51,19 +61,14 @@ public class MoviesFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
         Bundle savedInstanceState) {
 
-        mAdapter =
-            new ArrayAdapter<>(
-                getActivity(), // The current context (this activity)
-                R.layout.grid_item_movie, // The name of the layout ID.
-                R.id.grid_item_movie_poster,
-                new ArrayList<Movie>());
+        mAdapter = new MovieArrayAdapter(getContext());
 
         View rootView = inflater.inflate(R.layout.fragment_movies, container, false);
 
         // Get a reference to the ListView, and attach this adapter to it.
-        GridView gridView = (GridView) rootView.findViewById(R.id.gridview_movies);
-        gridView.setAdapter(mAdapter);
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        mMovieGrid = (GridView) rootView.findViewById(R.id.gridview_movies);
+        mMovieGrid.setAdapter(mAdapter);
+        mMovieGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
@@ -86,9 +91,17 @@ public class MoviesFragment extends Fragment {
     public void updateMovies() {
         FetchMoviesTask moviesTask = new FetchMoviesTask();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-//        String sortPref = prefs.getString(getString(R.string.pref_sort_key),
-//            getString(R.string.pref_sort_default));
-        moviesTask.execute();
+        String sortPref = prefs.getString(getString(R.string.pref_sort_key),
+            getString(R.string.pref_sort_default));
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            moviesTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, sortPref);
+        } else {
+            moviesTask.execute(sortPref);
+        }
+
+       // moviesTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, sortPref);
+       // moviesTask.execute(sortPref);
     }
 
 
@@ -120,11 +133,6 @@ public class MoviesFragment extends Fragment {
 
             Movie[] moviesArray = new Movie[moviesJsonArray.length()];
 
-            // Data is fetched in Celsius by default.
-            // If user prefers to see in Fahrenheit, convert the values here.
-            // We do this rather than fetching in Fahrenheit so that the user can
-            // change this option without us having to re-fetch the data once
-            // we start storing the values in a database.
             SharedPreferences sharedPrefs =
                 PreferenceManager.getDefaultSharedPreferences(getActivity());
             String sortOrder = sharedPrefs.getString(
@@ -137,7 +145,7 @@ public class MoviesFragment extends Fragment {
                 String synopsis;
                 String posterPath;
                 Date releaseDate;
-                double popularity;
+                long popularity;
                 double rating;
 
                 // Get the JSON object representing the day
@@ -148,7 +156,7 @@ public class MoviesFragment extends Fragment {
                 synopsis = movie.getString(MDB_SYNOPSIS);
                 posterPath = movie.getString(MDB_POSTER_PATH);
                 releaseDate = getDateFromJson(movie.getString(MDB_RELEASE_DATE));
-                popularity = movie.getDouble(MDB_POPULARITY);
+                popularity = movie.getLong(MDB_POPULARITY);
                 rating = movie.getDouble(MDB_RATING);
 
                 Movie currentMovie = new Movie(id, title, posterPath, rating, popularity, synopsis, releaseDate);
@@ -157,7 +165,7 @@ public class MoviesFragment extends Fragment {
             }
 
             moviesArray = sortMovies(moviesArray, sortOrder);
-
+            Log.v(LOG_TAG, moviesArray.toString());
             return moviesArray;
         }
 
@@ -169,9 +177,9 @@ public class MoviesFragment extends Fragment {
                         @Override
                         public int compare(Movie lhs, Movie rhs) {
                             if (lhs.getPopularity() > rhs.getPopularity()) {
-                                return 1;
-                            } else {
                                 return -1;
+                            } else {
+                                return 1;
                             }
                         }
                     });
@@ -213,6 +221,14 @@ public class MoviesFragment extends Fragment {
         @Override
         protected Movie[] doInBackground(String... params) {
 
+            //TODO query by year? rating?
+
+            String sort;
+            if(params != null) {
+                sort = params[0];
+            } else {
+                sort = getString(R.string.pref_sort_default);
+            }
             // These two need to be declared outside the try/catch
             // so that they can be closed in the finally block.
             HttpURLConnection urlConnection = null;
@@ -220,8 +236,6 @@ public class MoviesFragment extends Fragment {
 
             // Will contain the raw JSON response as a string.
             String moviesJsonStr = null;
-
-            String sort = getString(R.string.pref_sort_default);
 
             try {
                 // Construct the URL for the OpenWeatherMap query
@@ -231,10 +245,12 @@ public class MoviesFragment extends Fragment {
                     "http://api.themoviedb.org/3/discover/movie?";
                 final String SORT_PARAM = "sort_by";
                 final String API_KEY_PARAM = "api_key";
+                final String YEAR_PARAM = "year";
 
                 Uri builtUri = Uri.parse(MOVIES_BASE_URL).buildUpon()
                     .appendQueryParameter(SORT_PARAM, sort)
                     .appendQueryParameter(API_KEY_PARAM, BuildConfig.MY_MOVIE_DB_API_KEY)
+                    .appendQueryParameter(YEAR_PARAM, "2015")
                     .build();
 
                 URL url = new URL(builtUri.toString());
@@ -297,6 +313,12 @@ public class MoviesFragment extends Fragment {
         }
 
         @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            Toast.makeText(getContext(), "in on pre execute", Toast.LENGTH_LONG).show();
+        }
+
+        @Override
         protected void onPostExecute(Movie[] result) {
             if (result != null) {
                 mAdapter.clear();
@@ -304,59 +326,69 @@ public class MoviesFragment extends Fragment {
                 for (Movie movie : result) {
                     mAdapter.add(movie);
                 }
+                mMovieGrid.setAdapter(mAdapter);
             }
         }
     }
 
 
-//    public class MovieArrayAdapter extends BaseAdapter {
-//
-//        ArrayList<Movie> array;
-//
-//        private Context context;
-//
-//        MovieArrayAdapter(Context context) {
-//            this.context = context;
-//            array = new ArrayList();
-//            Resources resources = context.getResources();
-//            String[] tempPlaces = resources.getStringArray(R.array.PlacesName);
-//            String[] tempDate = resources.getStringArray(R.array.ScheduleDate);
-//            String[] tempDescription = resources.getStringArray(R.array.Description);
-//            for (int count = 0; count < 4; count++) {
-//                Schedule tempSchedule = new Schedule(tempPlaces[count], tempDate[count], tempDescription[count]);
-//                list.add(tempSchedule);
-//            }
-//        }
-//
-//        @Override
-//        public int getCount() {
-//            return array.size();
-//        }
-//
-//        @Override
-//        public Object getItem(int position) {
-//            return array.get(position);
-//        }
-//
-//        @Override
-//        public long getItemId(int position) {
-//            return position;
-//        }
-//
-//        @Override
-//        public View getView(int position, View convertView, ViewGroup parent) {
-//            Schedule tempSchedule = array.get(position);
-//            if (convertView == null) {
-//                convertView = LayoutInflater.from(context).inflate(R.layout.grid_item_movie, parent, false);
-//            }
-//            ImageView moviePoster = (ImageView) convertView.findViewById(R.id.grid_item_movie_poster);
-//            TextView scheduleDate = (TextView) convertView.findViewById(R.id.schedule_date);
-//            TextView description = (TextView) convertView.findViewById(R.id.description);
-//            placeName.setText(tempSchedule.Place);
-//            scheduleDate.setText(tempSchedule.ScheduleTime);
-//            description.setText(tempSchedule.Description);
-//            return convertView;
-//        }
-//
-//    }
+    public class MovieArrayAdapter extends BaseAdapter {
+
+        ArrayList<Movie> array;
+
+        private Context context;
+
+        MovieArrayAdapter(Context context) {
+            this.context = context;
+            array = new ArrayList<>();
+        }
+
+        @Override
+        public int getCount() {
+            return array.size();
+        }
+
+        @Override
+        public Movie getItem(int position) {
+            return array.get(position);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View gridItem;
+
+            Movie tempMovie = array.get(position);
+            if (convertView == null) {
+                gridItem = LayoutInflater.from(context).inflate(R.layout.grid_item_movie, parent, false);
+            } else {
+                gridItem = convertView;
+            }
+            ImageView moviePoster = (ImageView) gridItem.findViewById(R.id.grid_item_movie_poster);
+            TextView movieTitle = (TextView) gridItem.findViewById(R.id.grid_item_movie_title);
+
+            int width = mMovieGrid.getMeasuredWidth() / 3;
+            moviePoster.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            moviePoster.setMaxWidth(width);
+            moviePoster.setMinimumHeight(width);
+
+            Picasso.with(getContext()).load(tempMovie.getPosterPath()).into(moviePoster);
+            movieTitle.setText(tempMovie.getTitle());
+
+            return gridItem;
+        }
+
+        public void clear() {
+            array.clear();
+        }
+
+        public void add(Movie movie) {
+            array.add(movie);
+        }
+
+    }
 }

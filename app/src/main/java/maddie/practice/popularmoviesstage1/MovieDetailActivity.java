@@ -5,6 +5,8 @@ import android.support.v7.app.AppCompatActivity;
 
 public class MovieDetailActivity extends AppCompatActivity {
 
+    private final String LOG_TAG = MovieDetailActivity.class.getSimpleName();
+
     private Movie mMovie;
 
     @Override

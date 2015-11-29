@@ -1,7 +1,11 @@
 package maddie.practice.popularmoviesstage1;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Log;
 
+import java.io.InputStream;
+import java.net.URL;
 import java.util.Date;
 
 /**
@@ -9,16 +13,18 @@ import java.util.Date;
  */
 public class Movie {
 
+    private final String LOG_TAG = Movie.class.getSimpleName();
+
     private long mId;
     private String mTitle;
     private String mPosterPath;
     private double mRating;
-    private double mPopularity;
+    private long mPopularity;
     private String mSynopsis;
     private Date mReleaseDate;
     private Bitmap mPosterBitmap;
 
-    public Movie(long id, String title, String poster, double rating, double popularity, String synopsis, Date releaseDate) {
+    public Movie(long id, String title, String poster, double rating, long popularity, String synopsis, Date releaseDate) {
         mId = id;
         mTitle = title;
         mPosterPath = poster;
@@ -45,11 +51,11 @@ public class Movie {
         mTitle = title;
     }
 
-    public String getPoster() {
+    public String getPosterPath() {
         return mPosterPath;
     }
 
-    public void setPoster(String poster) {
+    public void setPosterPath(String poster) {
         this.mPosterPath = poster;
     }
 
@@ -65,7 +71,7 @@ public class Movie {
         return mPopularity;
     }
 
-    public void setPopularity(double popularity) {
+    public void setPopularity(long popularity) {
         this.mPopularity = popularity;
     }
 
@@ -86,11 +92,28 @@ public class Movie {
     }
 
     public Bitmap setPosterBitmapFromString(String path){
+
         if(path == null) {
             return null;
         } else {
-           // Bitmap poster = new Bitmap();
+            String url = "http://image.tmdb.org/t/p/w185/" + path;
+            Bitmap poster = null;
+
+            try {
+                poster = BitmapFactory.decodeStream((InputStream) new URL(url).getContent());
+            } catch (Exception e) {
+                Log.e(LOG_TAG, e.getMessage());
+            }
+
+            return poster;
         }
-        return null;
+    }
+
+    public Bitmap getPosterBitmap() {
+        return mPosterBitmap;
+    }
+
+    public String toString() {
+        return getTitle() + " " + getRating() + " " + getPopularity();
     }
 }
