@@ -1,5 +1,6 @@
 package maddie.practice.popularmoviesstage1;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -39,6 +40,8 @@ public class SettingsActivity extends PreferenceActivity
 
     @Override
     public boolean onPreferenceChange(Preference preference, Object value) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(preference.getContext());
+        String previousValue = prefs.getString(preference.getKey(), getString(R.string.pref_sort_default));
         String stringValue = value.toString();
 
         if (preference instanceof ListPreference) {
@@ -48,6 +51,9 @@ public class SettingsActivity extends PreferenceActivity
             int prefIndex = listPreference.findIndexOfValue(stringValue);
             if (prefIndex >= 0) {
                 preference.setSummary(listPreference.getEntries()[prefIndex]);
+            }
+            if(previousValue != stringValue) {
+                finish();
             }
         } else {
             // For other preferences, set the summary to the value's simple string representation.
