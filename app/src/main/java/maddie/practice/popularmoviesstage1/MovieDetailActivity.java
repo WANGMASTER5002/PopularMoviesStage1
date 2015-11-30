@@ -26,6 +26,12 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+
+/**
+ * Created by Madeline Beyl
+ * MovieDetailActivity shows the user the poster, rating, release date, and synopsis
+ * Inspired by code from Sunshine project
+ */
 public class MovieDetailActivity extends AppCompatActivity {
 
     @Override
@@ -38,7 +44,6 @@ public class MovieDetailActivity extends AppCompatActivity {
                 .commit();
         }
     }
-
 
     public static class MovieDetailFragment extends Fragment {
 
@@ -72,14 +77,12 @@ public class MovieDetailActivity extends AppCompatActivity {
 
         public void setUpDetailsUI() {
 
-            getActivity().setTitle(mMovie.getTitle() + getString(R.string.details));
+            getActivity().setTitle(mMovie.getTitle() + " " + getString(R.string.details));
 
             movieSynopsis = (TextView) rootView.findViewById(R.id.movie_details_synopsis_textview);
             movieSynopsis.setText(mMovie.getSynopsis());
-            int synopsisHeight = movieSynopsis.getHeight();
 
             moviePoster = (ImageView) rootView.findViewById(R.id.movie_details_poster_imageview);
-            moviePoster.setMinimumHeight(synopsisHeight / 2);
             moviePoster.setImageBitmap(mMovie.getPosterBitmap());
 
 
@@ -110,42 +113,30 @@ public class MovieDetailActivity extends AppCompatActivity {
             private final String LOG_TAG = FetchMovieDetailTask.class.getSimpleName();
 
             /**
-             * Take the String representing the complete forecast in JSON Format and pull out the data we need to construct the Strings needed
-             * for the wireframes.
-             *
-             * Fortunately parsing is easy:  constructor takes the JSON string and converts it into an Object hierarchy for us.
+             * Take the String representing the complete movie info in JSON Format and pull out the data we need to construct the Strings
+             * needed for the UI.
              */
             private Movie getMovieDetailsFromJson(String movieJsonStr)
                 throws JSONException {
 
                 // These are the names of the JSON objects that need to be extracted.
-                final String MDB_ID = "id";
-                final String MDB_POPULARITY = "popularity";
-                final String MDB_TITLE = "title";
-                final String MDB_SYNOPSIS = "overview";
-                final String MDB_RATING = "vote_average";
-                final String MDB_RELEASE_DATE = "release_date";
-                final String MDB_POSTER_PATH = "poster_path";
+                final String MDB_ID = getString(R.string.id_json);
+                final String MDB_POPULARITY = getString(R.string.popularity_json);
+                final String MDB_TITLE = getString(R.string.title_json);
+                final String MDB_SYNOPSIS = getString(R.string.synopsis_json);
+                final String MDB_RATING = getString(R.string.rating_json);
+                final String MDB_RELEASE_DATE = getString(R.string.release_date_json);
+                final String MDB_POSTER_PATH = getString(R.string.poster_path_json);
 
                 JSONObject moviesJson = new JSONObject(movieJsonStr);
 
-                long id;
-                String title;
-                String synopsis;
-                String posterPath;
-                Date releaseDate;
-                long popularity;
-                double rating;
-
-                // Get the JSON object representing the day
-
-                id = moviesJson.getLong(MDB_ID);
-                title = moviesJson.getString(MDB_TITLE);
-                synopsis = moviesJson.getString(MDB_SYNOPSIS);
-                posterPath = moviesJson.getString(MDB_POSTER_PATH);
-                releaseDate = getDateFromJson(moviesJson.getString(MDB_RELEASE_DATE));
-                popularity = moviesJson.getLong(MDB_POPULARITY);
-                rating = moviesJson.getDouble(MDB_RATING);
+                long id = moviesJson.getLong(MDB_ID);
+                String title = moviesJson.getString(MDB_TITLE);
+                String synopsis = moviesJson.getString(MDB_SYNOPSIS);
+                String posterPath = moviesJson.getString(MDB_POSTER_PATH);
+                Date releaseDate = getDateFromJson(moviesJson.getString(MDB_RELEASE_DATE));
+                Long popularity = moviesJson.getLong(MDB_POPULARITY);
+                Double rating = moviesJson.getDouble(MDB_RATING);
 
                 Movie currentMovie = new Movie(id, title, posterPath, rating, popularity, synopsis, releaseDate);
 
@@ -177,8 +168,6 @@ public class MovieDetailActivity extends AppCompatActivity {
                     id = null;
                 }
 
-                // These two need to be declared outside the try/catch
-                // so that they can be closed in the finally block.
                 HttpURLConnection urlConnection = null;
                 BufferedReader reader = null;
 
@@ -193,7 +182,6 @@ public class MovieDetailActivity extends AppCompatActivity {
                         .appendQueryParameter(API_KEY_PARAM, BuildConfig.MY_MOVIE_DB_API_KEY)
                         .build();
                     URL url = new URL(builtUri.toString());
-                    // Create the request to OpenWeatherMap, and open the connection
                     urlConnection = (HttpURLConnection) url.openConnection();
                     urlConnection.setRequestMethod("GET");
                     urlConnection.connect();
@@ -209,9 +197,6 @@ public class MovieDetailActivity extends AppCompatActivity {
 
                     String line;
                     while ((line = reader.readLine()) != null) {
-                        // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                        // But it does make debugging a *lot* easier if you print out the completed
-                        // buffer for debugging.
                         buffer.append(line + "\n");
                     }
 
@@ -223,7 +208,7 @@ public class MovieDetailActivity extends AppCompatActivity {
                     Log.v(LOG_TAG, movieJsonStr);
                 } catch (IOException e) {
                     Log.e(LOG_TAG, "Error ", e);
-                    // If the code didn't successfully get the weather data, there's no point in attemping
+                    // If the code didn't successfully get the movie data, there's no point in attempting
                     // to parse it.
                     return null;
                 } finally {

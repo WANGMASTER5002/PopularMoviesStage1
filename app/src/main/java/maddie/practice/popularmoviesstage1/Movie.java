@@ -9,7 +9,8 @@ import java.net.URL;
 import java.util.Date;
 
 /**
- * Created by rfl518 on 11/28/15.
+ * Created by Madeline Beyl
+ * Movie class representing a movie in The Movie Database
  */
 public class Movie {
 

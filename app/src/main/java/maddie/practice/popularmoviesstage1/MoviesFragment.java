@@ -72,6 +72,7 @@ public class MoviesFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_movies, container, false);
 
         mPageLoading = rootView.findViewById(R.id.page_loading);
+        mPageLoading.bringToFront();
 
         // Get a reference to the ListView, and attach this adapter to it.
         mMovieGrid = (GridView) rootView.findViewById(R.id.gridview_movies);
@@ -147,7 +148,7 @@ public class MoviesFragment extends Fragment {
                 long popularity;
                 double rating;
 
-                // Get the JSON object representing the day
+                // Get the JSON object representing the movie
                 JSONObject movie = moviesJsonArray.getJSONObject(i);
 
                 id = movie.getLong(MDB_ID);
@@ -210,8 +211,6 @@ public class MoviesFragment extends Fragment {
         @Override
         protected Movie[] doInBackground(String... params) {
 
-            // These two need to be declared outside the try/catch
-            // so that they can be closed in the finally block.
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
 
@@ -219,9 +218,6 @@ public class MoviesFragment extends Fragment {
             String moviesJsonStr = null;
 
             try {
-                // Construct the URL for the OpenWeatherMap query
-                // Possible parameters are avaiable at OWM's forecast API page, at
-                // http://openweathermap.org/API#forecast
                 final String MOVIES_BASE_URL =
                     "http://api.themoviedb.org/3/discover/movie?";
                 final String API_KEY_PARAM = "api_key";
@@ -234,7 +230,6 @@ public class MoviesFragment extends Fragment {
 
                 URL url = new URL(builtUri.toString());
 
-                // Create the request to OpenWeatherMap, and open the connection
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("GET");
                 urlConnection.connect();
@@ -250,9 +245,6 @@ public class MoviesFragment extends Fragment {
 
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                    // But it does make debugging a *lot* easier if you print out the completed
-                    // buffer for debugging.
                     buffer.append(line + "\n");
                 }
 
@@ -264,7 +256,7 @@ public class MoviesFragment extends Fragment {
                 Log.v(LOG_TAG, moviesJsonStr);
             } catch (IOException e) {
                 Log.e(LOG_TAG, "Error ", e);
-                // If the code didn't successfully get the weather data, there's no point in attemping
+                // If the code didn't successfully get the movies data, there's no point in attempting
                 // to parse it.
                 return null;
             } finally {
