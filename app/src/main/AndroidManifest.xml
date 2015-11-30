@@ -8,11 +8,12 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/popular_movies"
-        android:theme="@style/AppTheme" >
+        android:theme="@style/Theme.AppCompat" >
 
         <activity
             android:name=".MainActivity"
-            android:label="@string/popular_movies" >
+            android:label="@string/popular_movies">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -21,7 +22,8 @@
         </activity>
         <activity
             android:name=".MovieDetailActivity"
-            android:label="@string/title_activity_movie_detail" >
+            android:label="@string/title_activity_movie_detail"
+            >
         </activity>
         <activity
             android:name=".SettingsActivity"

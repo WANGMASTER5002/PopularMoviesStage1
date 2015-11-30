@@ -11,8 +11,8 @@
 
         <ImageView
                 android:id="@+id/movie_details_poster_imageview"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"/>
 
         <LinearLayout
                 android:layout_width="wrap_content"
@@ -50,11 +50,21 @@
     </LinearLayout>
 
     <TextView
-            android:id="@+id/movie_details_synopsis_textview"
+            android:id="@+id/movie_details_synopsis"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:text="@string/synopsis"
             android:layout_below="@id/movie_details_info_container"
-            android:text="here is an example synopsis. super-villain kills innocent human, causes war with aliens. heavy on action, blood, and sex. sure to be a success."
+            android:padding="4dp"/>
+
+    <TextView
+            android:id="@+id/movie_details_synopsis_textview"
+            android:layout_below="@id/movie_details_synopsis"
+            android:text="@string/no_synopsis"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:padding="4dp"/>
 
 
 </RelativeLayout>

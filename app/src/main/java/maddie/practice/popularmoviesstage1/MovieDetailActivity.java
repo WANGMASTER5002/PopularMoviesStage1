@@ -6,7 +6,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,7 +26,7 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class MovieDetailActivity extends ActionBarActivity {
+public class MovieDetailActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +34,7 @@ public class MovieDetailActivity extends ActionBarActivity {
         setContentView(R.layout.activity_movie_detail);
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                .add(R.id.container, new MovieDetailFragment())
+                .add(R.id.movies_fragment_container, new MovieDetailFragment())
                 .commit();
         }
     }
@@ -72,8 +72,16 @@ public class MovieDetailActivity extends ActionBarActivity {
 
         public void setUpDetailsUI() {
 
+            getActivity().setTitle(mMovie.getTitle() + getString(R.string.details));
+
+            movieSynopsis = (TextView) rootView.findViewById(R.id.movie_details_synopsis_textview);
+            movieSynopsis.setText(mMovie.getSynopsis());
+            int synopsisHeight = movieSynopsis.getHeight();
+
             moviePoster = (ImageView) rootView.findViewById(R.id.movie_details_poster_imageview);
+            moviePoster.setMinimumHeight(synopsisHeight / 2);
             moviePoster.setImageBitmap(mMovie.getPosterBitmap());
+
 
             movieRating = (TextView) rootView.findViewById(R.id.movie_details_vote_average_textview);
             movieRating.setText(Double.toString(mMovie.getRating()));
@@ -253,6 +261,5 @@ public class MovieDetailActivity extends ActionBarActivity {
         }
 
     }
-
 
 }

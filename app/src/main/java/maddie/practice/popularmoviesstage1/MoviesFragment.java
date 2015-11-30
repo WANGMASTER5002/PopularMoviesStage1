@@ -39,8 +39,9 @@ public class MoviesFragment extends Fragment {
 
     private final String LOG_TAG = MoviesFragment.class.getSimpleName();
 
-    MovieArrayAdapter mAdapter;
-    GridView mMovieGrid;
+    private MovieArrayAdapter mAdapter;
+    private GridView mMovieGrid;
+    private View mPageLoading;
 
     public MoviesFragment() {
     }
@@ -49,6 +50,17 @@ public class MoviesFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        SharedPreferences prefs= PreferenceManager.getDefaultSharedPreferences(getActivity());
+
+        prefs.registerOnSharedPreferenceChangeListener(
+            new SharedPreferences
+                .OnSharedPreferenceChangeListener() {
+                @Override
+                public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+                    mAdapter.clear();
+                    updateMovies();
+                }
+            });
     }
 
     @Override
@@ -58,6 +70,8 @@ public class MoviesFragment extends Fragment {
         mAdapter = new MovieArrayAdapter(getContext());
 
         View rootView = inflater.inflate(R.layout.fragment_movies, container, false);
+
+        mPageLoading = rootView.findViewById(R.id.page_loading);
 
         // Get a reference to the ListView, and attach this adapter to it.
         mMovieGrid = (GridView) rootView.findViewById(R.id.gridview_movies);
@@ -82,6 +96,7 @@ public class MoviesFragment extends Fragment {
         updateMovies();
     }
 
+
     public void updateMovies() {
         FetchMoviesTask moviesTask = new FetchMoviesTask();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
@@ -99,7 +114,6 @@ public class MoviesFragment extends Fragment {
     public class FetchMoviesTask extends AsyncTask<String, Void, Movie[]> {
 
         private final String LOG_TAG = FetchMoviesTask.class.getSimpleName();
-
         /**
          * Take the String representing the complete forecast in JSON Format and pull out the data we need to construct the Strings needed
          * for the wireframes.
@@ -153,6 +167,7 @@ public class MoviesFragment extends Fragment {
 
         protected Movie[] sortMovies(Movie[] originalMovies, String sortOrder) {
 
+            //TODO take out hard coding
             switch (sortOrder) {
                 case "popularity.desc":
                     Arrays.sort(originalMovies, new Comparator<Movie>() {
@@ -171,9 +186,9 @@ public class MoviesFragment extends Fragment {
                         @Override
                         public int compare(Movie lhs, Movie rhs) {
                             if (lhs.getRating() > rhs.getRating()) {
-                                return 1;
-                            } else {
                                 return -1;
+                            } else {
+                                return 1;
                             }
                         }
                     });
@@ -186,16 +201,15 @@ public class MoviesFragment extends Fragment {
         }
 
         @Override
+        protected void onPreExecute() {
+            mPageLoading.setVisibility(View.VISIBLE);
+            mMovieGrid.setClickable(false);
+            super.onPreExecute();
+        }
+
+        @Override
         protected Movie[] doInBackground(String... params) {
 
-            //TODO query by year? rating?
-
-            String sort;
-            if(params != null) {
-                sort = params[0];
-            } else {
-                sort = getString(R.string.pref_sort_default);
-            }
             // These two need to be declared outside the try/catch
             // so that they can be closed in the finally block.
             HttpURLConnection urlConnection = null;
@@ -210,12 +224,10 @@ public class MoviesFragment extends Fragment {
                 // http://openweathermap.org/API#forecast
                 final String MOVIES_BASE_URL =
                     "http://api.themoviedb.org/3/discover/movie?";
-                final String SORT_PARAM = "sort_by";
                 final String API_KEY_PARAM = "api_key";
                 final String YEAR_PARAM = "year";
 
                 Uri builtUri = Uri.parse(MOVIES_BASE_URL).buildUpon()
-                    .appendQueryParameter(SORT_PARAM, sort)
                     .appendQueryParameter(API_KEY_PARAM, BuildConfig.MY_MOVIE_DB_API_KEY)
                     .appendQueryParameter(YEAR_PARAM, "2015")
                     .build();
@@ -289,6 +301,9 @@ public class MoviesFragment extends Fragment {
                 }
                 mMovieGrid.setAdapter(mAdapter);
             }
+            mPageLoading.setVisibility(View.GONE);
+            mMovieGrid.setClickable(true);
+
         }
     }
 
@@ -331,9 +346,9 @@ public class MoviesFragment extends Fragment {
             ImageView moviePoster = (ImageView) gridItem.findViewById(R.id.grid_item_movie_poster);
 
             int width = mMovieGrid.getMeasuredWidth() / 3;
-            moviePoster.setScaleType(ImageView.ScaleType.FIT_XY);
-//            moviePoster.setMaxWidth(width);
-//            moviePoster.setMinimumHeight(width);
+            moviePoster.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            moviePoster.setMinimumWidth(width);
+            moviePoster.setMinimumHeight(width);
             moviePoster.setImageBitmap(tempMovie.getPosterBitmap());
 
             //Picasso.with(getContext()).load(tempMovie.getPosterPath()).into(moviePoster);

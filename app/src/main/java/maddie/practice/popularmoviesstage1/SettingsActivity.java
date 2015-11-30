@@ -53,6 +53,7 @@ public class SettingsActivity extends PreferenceActivity
                 preference.setSummary(listPreference.getEntries()[prefIndex]);
             }
             if(previousValue != stringValue) {
+                prefs.edit().putString(preference.getKey(), stringValue);
                 finish();
             }
         } else {
@@ -61,5 +62,6 @@ public class SettingsActivity extends PreferenceActivity
         }
         return true;
     }
+
 
 }
