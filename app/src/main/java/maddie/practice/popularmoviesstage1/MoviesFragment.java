@@ -338,12 +338,10 @@ public class MoviesFragment extends Fragment {
             ImageView moviePoster = (ImageView) gridItem.findViewById(R.id.grid_item_movie_poster);
 
             int width = mMovieGrid.getMeasuredWidth() / 3;
-            moviePoster.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            moviePoster.setScaleType(ImageView.ScaleType.FIT_CENTER);
             moviePoster.setMinimumWidth(width);
             moviePoster.setMinimumHeight(width);
             moviePoster.setImageBitmap(tempMovie.getPosterBitmap());
-
-            //Picasso.with(getContext()).load(tempMovie.getPosterPath()).into(moviePoster);
 
             return gridItem;
         }

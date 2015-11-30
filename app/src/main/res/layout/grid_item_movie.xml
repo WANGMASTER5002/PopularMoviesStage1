@@ -9,6 +9,6 @@
         android:layout_margin="2dp"
         android:paddingTop="@dimen/standard_view_padding"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="match_parent"/>
 
 </RelativeLayout>
