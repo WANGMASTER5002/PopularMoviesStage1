@@ -3,9 +3,6 @@ package maddie.practice.popularmoviesstage1;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
-import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -18,19 +15,15 @@ import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
+
+import retrofit.Call;
+import retrofit.Callback;
+import retrofit.GsonConverterFactory;
+import retrofit.Response;
+import retrofit.Retrofit;
+import retrofit.http.GET;
+import retrofit.http.Query;
 
 /**
  * Fragment holding GridView of movies returned from The Movie Database API
@@ -40,7 +33,9 @@ public class MoviesFragment extends Fragment {
     private final String LOG_TAG = MoviesFragment.class.getSimpleName();
 
     private MovieArrayAdapter mAdapter;
+
     private GridView mMovieGrid;
+
     private View mPageLoading;
 
     public MoviesFragment() {
@@ -50,7 +45,7 @@ public class MoviesFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
-        SharedPreferences prefs= PreferenceManager.getDefaultSharedPreferences(getActivity());
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
         prefs.registerOnSharedPreferenceChangeListener(
             new SharedPreferences
@@ -99,205 +94,212 @@ public class MoviesFragment extends Fragment {
 
 
     public void updateMovies() {
-        FetchMoviesTask moviesTask = new FetchMoviesTask();
+
+        Retrofit retrofit = new Retrofit.Builder()
+            .baseUrl(Constants.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build();
+
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String sortPref = prefs.getString(getString(R.string.pref_sort_key),
             getString(R.string.pref_sort_default));
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            moviesTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, sortPref);
-        } else {
-            moviesTask.execute(sortPref);
-        }
+        MovieEndpointInterface endpoints = retrofit.create(MovieEndpointInterface.class);
+        int year = 2016;
+        Call<MovieResponse> call = endpoints.getMovies(sortPref, year);
+
+        call.enqueue(new Callback<MovieResponse>() {
+            @Override
+            public void onResponse(Response response) {
+
+                if (response == null && response.isSuccess()) {
+                    return;
+                }
+
+                int statusCode = response.code();
+                MovieResponse movieResponse = (MovieResponse) response.body();
+                if (movieResponse != null) {
+                    String movies = movieResponse.toString();
+//                    //Log.e(LOG_TAG, movieResponse.toString());
+//                    Toast.makeText(getContext(), "hi", Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                Log.e(LOG_TAG, t.getMessage());
+            }
+        });
+
+
     }
 
 
-    public class FetchMoviesTask extends AsyncTask<String, Void, Movie[]> {
-
-        private final String LOG_TAG = FetchMoviesTask.class.getSimpleName();
-        /**
-         * Take the String representing the complete forecast in JSON Format and pull out the data we need to construct the Strings needed
-         * for the wireframes.
-         *
-         * Fortunately parsing is easy:  constructor takes the JSON string and converts it into an Object hierarchy for us.
-         */
-        private Movie[] getMoviesFromJson(String moviesJsonStr)
-            throws JSONException {
-
-            // These are the names of the JSON objects that need to be extracted.
-            final String MDB_RESULTS = "results";
-            final String MDB_ID = "id";
-            final String MDB_POPULARITY = "popularity";
-            final String MDB_RATING = "vote_average";
-            final String MDB_POSTER_PATH = "poster_path";
-
-            JSONObject moviesJson = new JSONObject(moviesJsonStr);
-            JSONArray moviesJsonArray = moviesJson.getJSONArray(MDB_RESULTS);
-
-            Movie[] moviesArray = new Movie[moviesJsonArray.length()];
-
-            SharedPreferences sharedPrefs =
-                PreferenceManager.getDefaultSharedPreferences(getActivity());
-            String sortOrder = sharedPrefs.getString(
-                getString(R.string.pref_sort_key),
-                getString(R.string.pref_sort_default));
-
-            for (int i = 0; i < moviesJsonArray.length(); i++) {
-                long id;
-                String posterPath;
-                long popularity;
-                double rating;
-
-                // Get the JSON object representing the movie
-                JSONObject movie = moviesJsonArray.getJSONObject(i);
-
-                id = movie.getLong(MDB_ID);
-                posterPath = movie.getString(MDB_POSTER_PATH);
-                popularity = movie.getLong(MDB_POPULARITY);
-                rating = movie.getDouble(MDB_RATING);
-
-                Movie currentMovie = new Movie(id, null, posterPath, rating, popularity, null, null);
-                moviesArray[i] = currentMovie;
-
-            }
-
-            moviesArray = sortMovies(moviesArray, sortOrder);
-            Log.v(LOG_TAG, moviesArray.toString());
-            return moviesArray;
-        }
-
-        protected Movie[] sortMovies(Movie[] originalMovies, String sortOrder) {
-
-            //TODO take out hard coding
-            switch (sortOrder) {
-                case "popularity.desc":
-                    Arrays.sort(originalMovies, new Comparator<Movie>() {
-                        @Override
-                        public int compare(Movie lhs, Movie rhs) {
-                            if (lhs.getPopularity() > rhs.getPopularity()) {
-                                return -1;
-                            } else {
-                                return 1;
-                            }
-                        }
-                    });
-                    break;
-                case "vote_average.desc":
-                    Arrays.sort(originalMovies, new Comparator<Movie>() {
-                        @Override
-                        public int compare(Movie lhs, Movie rhs) {
-                            if (lhs.getRating() > rhs.getRating()) {
-                                return -1;
-                            } else {
-                                return 1;
-                            }
-                        }
-                    });
-                    break;
-                default:
-                    break;
-            }
-
-            return originalMovies;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            mPageLoading.setVisibility(View.VISIBLE);
-            mMovieGrid.setClickable(false);
-            super.onPreExecute();
-        }
-
-        @Override
-        protected Movie[] doInBackground(String... params) {
-
-            HttpURLConnection urlConnection = null;
-            BufferedReader reader = null;
-
-            // Will contain the raw JSON response as a string.
-            String moviesJsonStr = null;
-
-            try {
-                final String MOVIES_BASE_URL =
-                    "http://api.themoviedb.org/3/discover/movie?";
-                final String API_KEY_PARAM = "api_key";
-                final String YEAR_PARAM = "year";
-
-                Uri builtUri = Uri.parse(MOVIES_BASE_URL).buildUpon()
-                    .appendQueryParameter(API_KEY_PARAM, BuildConfig.MY_MOVIE_DB_API_KEY)
-                    .appendQueryParameter(YEAR_PARAM, "2015")
-                    .build();
-
-                URL url = new URL(builtUri.toString());
-
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
-
-                // Read the input stream into a String
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null) {
-                    // Nothing to do.
-                    return null;
-                }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    buffer.append(line + "\n");
-                }
-
-                if (buffer.length() == 0) {
-                    // Stream was empty.  No point in parsing.
-                    return null;
-                }
-                moviesJsonStr = buffer.toString();
-                Log.v(LOG_TAG, moviesJsonStr);
-            } catch (IOException e) {
-                Log.e(LOG_TAG, "Error ", e);
-                // If the code didn't successfully get the movies data, there's no point in attempting
-                // to parse it.
-                return null;
-            } finally {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (final IOException e) {
-                        Log.e(LOG_TAG, "Error closing stream", e);
-                    }
-                }
-            }
-
-            try {
-                return getMoviesFromJson(moviesJsonStr);
-            } catch (JSONException e) {
-                Log.e(LOG_TAG, e.getMessage(), e);
-                e.printStackTrace();
-            }
-
-            // This will only happen if there was an error getting or parsing the forecast.
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Movie[] result) {
-            if (result != null) {
-                mAdapter.clear();
-                Log.v(LOG_TAG, result.toString());
-                for (Movie movie : result) {
-                    mAdapter.add(movie);
-                }
-                mMovieGrid.setAdapter(mAdapter);
-            }
-            mPageLoading.setVisibility(View.GONE);
-            mMovieGrid.setClickable(true);
-
-        }
-    }
+//
+//        private Movie[] getMoviesFromJson(String moviesJsonStr)
+//            throws JSONException {
+//
+//            JSONObject moviesJson = new JSONObject(moviesJsonStr);
+//            JSONArray moviesJsonArray = moviesJson.getJSONArray(MDB_RESULTS);
+//
+//            Movie[] moviesArray = new Movie[moviesJsonArray.length()];
+//
+//            for (int i = 0; i < moviesJsonArray.length(); i++) {
+//                long id;
+//                String posterPath;
+//                long popularity;
+//                double rating;
+//
+//                // Get the JSON object representing the movie
+//                JSONObject movie = moviesJsonArray.getJSONObject(i);
+//
+//                id = movie.getLong(MDB_ID);
+//                posterPath = movie.getString(MDB_POSTER_PATH);
+//                popularity = movie.getLong(MDB_POPULARITY);
+//                rating = movie.getDouble(MDB_RATING);
+//
+//                Movie currentMovie = new Movie(id, null, posterPath, rating, popularity, null, null);
+//                moviesArray[i] = currentMovie;
+//
+//            }
+//
+//            moviesArray = sortMovies(moviesArray, sortOrder);
+//            Log.v(LOG_TAG, moviesArray.toString());
+//            return moviesArray;
+//        }
+//
+//        protected Movie[] sortMovies(Movie[] originalMovies, String sortOrder) {
+//
+//            //TODO take out hard coding
+//            switch (sortOrder) {
+//                case "popularity.desc":
+//                    Arrays.sort(originalMovies, new Comparator<Movie>() {
+//                        @Override
+//                        public int compare(Movie lhs, Movie rhs) {
+//                            if (lhs.getPopularity() > rhs.getPopularity()) {
+//                                return -1;
+//                            } else {
+//                                return 1;
+//                            }
+//                        }
+//                    });
+//                    break;
+//                case "vote_average.desc":
+//                    Arrays.sort(originalMovies, new Comparator<Movie>() {
+//                        @Override
+//                        public int compare(Movie lhs, Movie rhs) {
+//                            if (lhs.getVoteAverage() > rhs.getVoteAverage()) {
+//                                return -1;
+//                            } else {
+//                                return 1;
+//                            }
+//                        }
+//                    });
+//                    break;
+//                default:
+//                    break;
+//            }
+//
+//            return originalMovies;
+//        }
+//
+//        @Override
+//        protected void onPreExecute() {
+//            mPageLoading.setVisibility(View.VISIBLE);
+//            mMovieGrid.setClickable(false);
+//            super.onPreExecute();
+//        }
+//
+//        @Override
+//        protected Movie[] doInBackground(String... params) {
+//
+//            HttpURLConnection urlConnection = null;
+//            BufferedReader reader = null;
+//
+//            // Will contain the raw JSON response as a string.
+//            String moviesJsonStr = null;
+//
+//            try {
+//                final String MOVIES_BASE_URL =
+//                    "http://api.themoviedb.org/3/discover/movie?";
+//                final String API_KEY_PARAM = "api_key";
+//                final String YEAR_PARAM = "year";
+//
+//                Uri builtUri = Uri.parse(MOVIES_BASE_URL).buildUpon()
+//                    .appendQueryParameter(API_KEY_PARAM, BuildConfig.MY_MOVIE_DB_API_KEY)
+//                    .appendQueryParameter(YEAR_PARAM, "2015")
+//                    .build();
+//
+//                URL url = new URL(builtUri.toString());
+//
+//                urlConnection = (HttpURLConnection) url.openConnection();
+//                urlConnection.setRequestMethod("GET");
+//                urlConnection.connect();
+//
+//                // Read the input stream into a String
+//                InputStream inputStream = urlConnection.getInputStream();
+//                StringBuffer buffer = new StringBuffer();
+//                if (inputStream == null) {
+//                    // Nothing to do.
+//                    return null;
+//                }
+//                reader = new BufferedReader(new InputStreamReader(inputStream));
+//
+//                String line;
+//                while ((line = reader.readLine()) != null) {
+//                    buffer.append(line + "\n");
+//                }
+//
+//                if (buffer.length() == 0) {
+//                    // Stream was empty.  No point in parsing.
+//                    return null;
+//                }
+//                moviesJsonStr = buffer.toString();
+//                Log.v(LOG_TAG, moviesJsonStr);
+//            } catch (IOException e) {
+//                Log.e(LOG_TAG, "Error ", e);
+//                // If the code didn't successfully get the movies data, there's no point in attempting
+//                // to parse it.
+//                return null;
+//            } finally {
+//                if (urlConnection != null) {
+//                    urlConnection.disconnect();
+//                }
+//                if (reader != null) {
+//                    try {
+//                        reader.close();
+//                    } catch (final IOException e) {
+//                        Log.e(LOG_TAG, "Error closing stream", e);
+//                    }
+//                }
+//            }
+//
+//            try {
+//                return getMoviesFromJson(moviesJsonStr);
+//            } catch (JSONException e) {
+//                Log.e(LOG_TAG, e.getMessage(), e);
+//                e.printStackTrace();
+//            }
+//
+//            // This will only happen if there was an error getting or parsing the forecast.
+//            return null;
+//        }
+//
+//        @Override
+//        protected void onPostExecute(Movie[] result) {
+//            if (result != null) {
+//                mAdapter.clear();
+//                Log.v(LOG_TAG, result.toString());
+//                for (Movie movie : result) {
+//                    mAdapter.add(movie);
+//                }
+//                mMovieGrid.setAdapter(mAdapter);
+//            }
+//            mPageLoading.setVisibility(View.GONE);
+//            mMovieGrid.setClickable(true);
+//
+//        }
+//    }
 
     public class MovieArrayAdapter extends BaseAdapter {
 
@@ -353,6 +355,13 @@ public class MoviesFragment extends Fragment {
         public void add(Movie movie) {
             array.add(movie);
         }
+
+    }
+
+    public interface MovieEndpointInterface {
+
+        @GET(Constants.MOVIES_URL)
+        Call<MovieResponse> getMovies(@Query("sort_by") String sort, @Query("year") int year);
 
     }
 }

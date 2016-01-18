@@ -80,21 +80,21 @@ public class MovieDetailActivity extends AppCompatActivity {
             getActivity().setTitle(mMovie.getTitle() + " " + getString(R.string.details));
 
             movieSynopsis = (TextView) rootView.findViewById(R.id.movie_details_synopsis_textview);
-            movieSynopsis.setText(mMovie.getSynopsis());
+            movieSynopsis.setText(mMovie.getOverview());
 
             moviePoster = (ImageView) rootView.findViewById(R.id.movie_details_poster_imageview);
             moviePoster.setImageBitmap(mMovie.getPosterBitmap());
 
 
             movieRating = (TextView) rootView.findViewById(R.id.movie_details_vote_average_textview);
-            movieRating.setText(Double.toString(mMovie.getRating()));
+            movieRating.setText(Double.toString(mMovie.getVoteAverage()));
 
             movieReleaseDate = (TextView) rootView.findViewById(R.id.movie_details_release_date_textview);
             SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy");
             movieReleaseDate.setText(dateFormat.format(mMovie.getReleaseDate()).toString());
 
             movieSynopsis = (TextView) rootView.findViewById(R.id.movie_details_synopsis_textview);
-            movieSynopsis.setText(mMovie.getSynopsis());
+            movieSynopsis.setText(mMovie.getOverview());
         }
 
         public void makeDetailsCall(Long id) {

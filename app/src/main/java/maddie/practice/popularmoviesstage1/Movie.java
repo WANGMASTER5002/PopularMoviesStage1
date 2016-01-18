@@ -16,80 +16,80 @@ public class Movie {
 
     private final String LOG_TAG = Movie.class.getSimpleName();
 
-    private long mId;
-    private String mTitle;
-    private String mPosterPath;
-    private double mRating;
-    private long mPopularity;
-    private String mSynopsis;
-    private Date mReleaseDate;
+    private long id;
+    private String title;
+    private String poster_path;
+    private double vote_average;
+    private long popularity;
+    private String overview;
+    private Date release_date;
     private Bitmap mPosterBitmap;
 
-    public Movie(long id, String title, String poster, double rating, long popularity, String synopsis, Date releaseDate) {
-        mId = id;
-        mTitle = title;
-        mPosterPath = poster;
-        mRating = rating;
-        mPopularity = popularity;
-        mSynopsis = synopsis;
-        mReleaseDate = releaseDate;
-        mPosterBitmap = setPosterBitmapFromString(mPosterPath);
+    public Movie(long id, String title, String poster_path, double vote_average, long popularity, String overview, Date release_date) {
+        this.id = id;
+        this.title = title;
+        this.poster_path = poster_path;
+        this.vote_average = vote_average;
+        this.popularity = popularity;
+        this.overview = overview;
+        this.release_date = release_date;
+        mPosterBitmap = setPosterBitmapFromString(poster_path);
     }
 
     public long getId() {
-        return mId;
+        return id;
     }
 
     public void setId(long id) {
-        mId = id;
+        this.id = id;
     }
 
     public String getTitle() {
-        return mTitle;
+        return title;
     }
 
     public void setTitle(String title) {
-        mTitle = title;
+        this.title = title;
     }
 
     public String getPosterPath() {
-        return mPosterPath;
+        return poster_path;
     }
 
-    public void setPosterPath(String poster) {
-        this.mPosterPath = poster;
+    public void setPosterPath(String poster_path) {
+        this.poster_path = poster_path;
     }
 
-    public double getRating() {
-        return mRating;
+    public double getVoteAverage() {
+        return vote_average;
     }
 
-    public void setRating(double rating) {
-        this.mRating = rating;
+    public void setVoteAverage(double vote_average) {
+        this.vote_average = vote_average;
     }
 
     public double getPopularity() {
-        return mPopularity;
+        return popularity;
     }
 
     public void setPopularity(long popularity) {
-        this.mPopularity = popularity;
+        this.popularity = popularity;
     }
 
     public Date getReleaseDate() {
-        return mReleaseDate;
+        return release_date;
     }
 
-    public void setReleaseDate(Date releaseDate) {
-        this.mReleaseDate = releaseDate;
+    public void setReleaseDate(Date release_date) {
+        this.release_date = release_date;
     }
 
-    public String getSynopsis() {
-        return mSynopsis;
+    public String getOverview() {
+        return overview;
     }
 
-    public void setSynopsis(String synopsis) {
-        this.mSynopsis = synopsis;
+    public void setOverview(String overview) {
+        this.overview = overview;
     }
 
     public Bitmap setPosterBitmapFromString(String path){
@@ -115,6 +115,6 @@ public class Movie {
     }
 
     public String toString() {
-        return getTitle() + " " + getRating() + " " + getPopularity();
+        return getTitle() + " " + getVoteAverage() + " " + getPopularity();
     }
 }
