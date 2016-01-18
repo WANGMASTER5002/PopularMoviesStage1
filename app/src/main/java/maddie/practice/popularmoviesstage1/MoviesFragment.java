@@ -15,8 +15,6 @@ import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 
-import java.util.ArrayList;
-
 import retrofit.Call;
 import retrofit.Callback;
 import retrofit.GsonConverterFactory;
@@ -32,7 +30,7 @@ public class MoviesFragment extends Fragment {
 
     private final String LOG_TAG = MoviesFragment.class.getSimpleName();
 
-    private MovieArrayAdapter mAdapter;
+    private MoviesAdapter mAdapter;
 
     private GridView mMovieGrid;
 
@@ -62,7 +60,7 @@ public class MoviesFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
         Bundle savedInstanceState) {
 
-        mAdapter = new MovieArrayAdapter(getContext());
+        mAdapter = new MoviesAdapter(getContext());
 
         View rootView = inflater.inflate(R.layout.fragment_movies, container, false);
 
@@ -301,25 +299,23 @@ public class MoviesFragment extends Fragment {
 //        }
 //    }
 
-    public class MovieArrayAdapter extends BaseAdapter {
 
-        ArrayList<Movie> array;
+    private class MoviesAdapter extends BaseAdapter {
 
         private Context context;
 
-        MovieArrayAdapter(Context context) {
+        MoviesAdapter(Context context) {
             this.context = context;
-            array = new ArrayList<>();
         }
 
         @Override
         public int getCount() {
-            return array.size();
+            return Movies.size();
         }
 
         @Override
         public Movie getItem(int position) {
-            return array.get(position);
+            return Movies.get(position);
         }
 
         @Override
@@ -331,7 +327,7 @@ public class MoviesFragment extends Fragment {
         public View getView(int position, View convertView, ViewGroup parent) {
             View gridItem;
 
-            Movie tempMovie = array.get(position);
+            Movie tempMovie = Movies.get(position);
             if (convertView == null) {
                 gridItem = LayoutInflater.from(context).inflate(R.layout.grid_item_movie, parent, false);
             } else {
@@ -343,17 +339,18 @@ public class MoviesFragment extends Fragment {
             moviePoster.setScaleType(ImageView.ScaleType.FIT_CENTER);
             moviePoster.setMinimumWidth(width);
             moviePoster.setMinimumHeight(width);
+
             moviePoster.setImageBitmap(tempMovie.getPosterBitmap());
 
             return gridItem;
         }
 
         public void clear() {
-            array.clear();
+            Movies.clear();
         }
 
         public void add(Movie movie) {
-            array.add(movie);
+            Movies.add(movie);
         }
 
     }
@@ -364,4 +361,5 @@ public class MoviesFragment extends Fragment {
         Call<MovieResponse> getMovies(@Query("sort_by") String sort, @Query("year") int year);
 
     }
+
 }

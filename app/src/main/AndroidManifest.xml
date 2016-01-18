@@ -13,6 +13,7 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/popular_movies">
+            android:launchMode="singleTop"
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -24,6 +25,7 @@
             android:name=".MovieDetailActivity"
             android:label="@string/title_activity_movie_detail"
             android:parentActivityName=".MainActivity"
+            android:launchMode="singleTop"
             >
         </activity>
         <activity

@@ -50,22 +50,27 @@
 
     </LinearLayout>
 
+
     <TextView
             android:id="@+id/movie_details_synopsis"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textStyle="bold"
             android:text="@string/synopsis"
-            android:layout_below="@id/movie_details_info_container"
-            android:padding="@dimen/standard_view_padding"/>
+            android:padding="@dimen/standard_view_padding"
+            android:layout_below="@id/movie_details_info_container"/>
 
-    <TextView
-            android:id="@+id/movie_details_synopsis_textview"
-            android:layout_below="@id/movie_details_synopsis"
-            android:text="@string/no_synopsis"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="@dimen/standard_view_padding"/>
+    <ScrollView android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/movie_details_synopsis">
+        <TextView
+                android:id="@+id/movie_details_synopsis_textview"
+                android:layout_below="@id/movie_details_synopsis"
+                android:text="@string/no_synopsis"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/standard_view_padding"/>
 
+    </ScrollView>
 
 </RelativeLayout>
