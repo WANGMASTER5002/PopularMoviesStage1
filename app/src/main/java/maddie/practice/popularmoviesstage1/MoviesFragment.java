@@ -69,9 +69,9 @@ public class MoviesFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_movies, container, false);
 
         mPageLoading = rootView.findViewById(R.id.page_loading);
-        mPageLoading.bringToFront();
+//        mPageLoading.bringToFront();
 
-        // Get a reference to the ListView, and attach this adapter to it.
+        // Get a reference to the GridView, and attach this adapter to it.
         mMovieGrid = (GridView) rootView.findViewById(R.id.gridview_movies);
         mMovieGrid.setAdapter(mAdapter);
         mMovieGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -128,11 +128,10 @@ public class MoviesFragment extends Fragment {
 
                 Movies.addAll(movieResponse);
 
-
-                mMovieGrid.setAdapter(mAdapter);
                 mAdapter.clear();
                 mAdapter.addAll(movieResponse);
                 mAdapter.notifyDataSetChanged();
+                mMovieGrid.setAdapter(mAdapter);
 
                 mPageLoading.setVisibility(View.GONE);
                 mMovieGrid.setClickable(true);
