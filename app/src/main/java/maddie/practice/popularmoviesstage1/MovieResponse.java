@@ -3,6 +3,7 @@ package maddie.practice.popularmoviesstage1;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.annotations.SerializedName;
 
 import android.util.Log;
 
@@ -14,11 +15,11 @@ import java.util.List;
  */
 public class MovieResponse {
 
-    private String LOG_TAG = MovieResponse.class.getSimpleName();
+    private static String LOG_TAG = MovieResponse.class.getSimpleName();
 
+    @SerializedName("results")
     private List<Movie> results;
 
-    // public constructor is necessary for collections
     public MovieResponse() {
         results = new ArrayList();
     }
@@ -36,6 +37,8 @@ public class MovieResponse {
     }
 
     public static MovieResponse parseJSON(String response) {
+
+        Log.d(LOG_TAG, "in parseJSON");
         Gson gson = new GsonBuilder().create();
 
         try

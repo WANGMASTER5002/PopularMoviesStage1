@@ -6,7 +6,6 @@ import android.util.Log;
 
 import java.io.InputStream;
 import java.net.URL;
-import java.util.Date;
 
 /**
  * Created by Madeline Beyl
@@ -20,12 +19,12 @@ public class Movie {
     private String title;
     private String poster_path;
     private double vote_average;
-    private long popularity;
+    private double popularity;
     private String overview;
-    private Date release_date;
+    private String release_date;
     private Bitmap mPosterBitmap;
 
-    public Movie(long id, String title, String poster_path, double vote_average, long popularity, String overview, Date release_date) {
+    public Movie(long id, String title, String poster_path, double vote_average, long popularity, String overview, String release_date) {
         this.id = id;
         this.title = title;
         this.poster_path = poster_path;
@@ -76,11 +75,11 @@ public class Movie {
         this.popularity = popularity;
     }
 
-    public Date getReleaseDate() {
+    public String getReleaseDate() {
         return release_date;
     }
 
-    public void setReleaseDate(Date release_date) {
+    public void setReleaseDate(String release_date) {
         this.release_date = release_date;
     }
 

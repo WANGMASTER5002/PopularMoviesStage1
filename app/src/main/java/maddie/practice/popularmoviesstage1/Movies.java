@@ -22,9 +22,17 @@ public class Movies {
         return INSTANCE;
     }
 
-    public List<Movie> getMovies() { return movies; }
+    public static List<Movie> getMovies() { return movies; }
 
     public static void add(Movie movie) { movies.add(movie); }
+
+    public static void addAll(MovieResponse inMovies) {
+        if (inMovies.getMovies().size() == 0) {
+            return;
+        }
+        movies.addAll(inMovies.getMovies());
+
+    }
 
     public static void clear() { movies.clear(); }
 

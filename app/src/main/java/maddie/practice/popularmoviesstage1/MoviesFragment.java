@@ -14,6 +14,10 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import retrofit.Call;
 import retrofit.Callback;
@@ -93,6 +97,8 @@ public class MoviesFragment extends Fragment {
 
     public void updateMovies() {
 
+        mMovieGrid.setClickable(false);
+
         Retrofit retrofit = new Retrofit.Builder()
             .baseUrl(Constants.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
@@ -103,10 +109,10 @@ public class MoviesFragment extends Fragment {
             getString(R.string.pref_sort_default));
 
         MovieEndpointInterface endpoints = retrofit.create(MovieEndpointInterface.class);
-        int year = 2016;
-        Call<MovieResponse> call = endpoints.getMovies(sortPref, year);
+        Call<MovieResponse> call = endpoints.getMovies(sortPref);
 
         call.enqueue(new Callback<MovieResponse>() {
+
             @Override
             public void onResponse(Response response) {
 
@@ -114,18 +120,31 @@ public class MoviesFragment extends Fragment {
                     return;
                 }
 
-                int statusCode = response.code();
                 MovieResponse movieResponse = (MovieResponse) response.body();
-                if (movieResponse != null) {
-                    String movies = movieResponse.toString();
-//                    //Log.e(LOG_TAG, movieResponse.toString());
-//                    Toast.makeText(getContext(), "hi", Toast.LENGTH_LONG).show();
-                }
+
+                Movies.clear(); // clear before populating
+
+                if (movieResponse == null) return;
+
+                Movies.addAll(movieResponse);
+
+
+                mMovieGrid.setAdapter(mAdapter);
+                mAdapter.clear();
+                mAdapter.addAll(movieResponse);
+                mAdapter.notifyDataSetChanged();
+
+                mPageLoading.setVisibility(View.GONE);
+                mMovieGrid.setClickable(true);
+
             }
+
 
             @Override
             public void onFailure(Throwable t) {
-                Log.e(LOG_TAG, t.getMessage());
+                Toast.makeText(getContext(), R.string.connection_error, Toast.LENGTH_LONG).show();
+                mPageLoading.setVisibility(View.GONE);
+                Log.e(LOG_TAG, t.getMessage() + t.getCause());
             }
         });
 
@@ -133,38 +152,6 @@ public class MoviesFragment extends Fragment {
     }
 
 
-//
-//        private Movie[] getMoviesFromJson(String moviesJsonStr)
-//            throws JSONException {
-//
-//            JSONObject moviesJson = new JSONObject(moviesJsonStr);
-//            JSONArray moviesJsonArray = moviesJson.getJSONArray(MDB_RESULTS);
-//
-//            Movie[] moviesArray = new Movie[moviesJsonArray.length()];
-//
-//            for (int i = 0; i < moviesJsonArray.length(); i++) {
-//                long id;
-//                String posterPath;
-//                long popularity;
-//                double rating;
-//
-//                // Get the JSON object representing the movie
-//                JSONObject movie = moviesJsonArray.getJSONObject(i);
-//
-//                id = movie.getLong(MDB_ID);
-//                posterPath = movie.getString(MDB_POSTER_PATH);
-//                popularity = movie.getLong(MDB_POPULARITY);
-//                rating = movie.getDouble(MDB_RATING);
-//
-//                Movie currentMovie = new Movie(id, null, posterPath, rating, popularity, null, null);
-//                moviesArray[i] = currentMovie;
-//
-//            }
-//
-//            moviesArray = sortMovies(moviesArray, sortOrder);
-//            Log.v(LOG_TAG, moviesArray.toString());
-//            return moviesArray;
-//        }
 //
 //        protected Movie[] sortMovies(Movie[] originalMovies, String sortOrder) {
 //
@@ -202,88 +189,6 @@ public class MoviesFragment extends Fragment {
 //        }
 //
 //        @Override
-//        protected void onPreExecute() {
-//            mPageLoading.setVisibility(View.VISIBLE);
-//            mMovieGrid.setClickable(false);
-//            super.onPreExecute();
-//        }
-//
-//        @Override
-//        protected Movie[] doInBackground(String... params) {
-//
-//            HttpURLConnection urlConnection = null;
-//            BufferedReader reader = null;
-//
-//            // Will contain the raw JSON response as a string.
-//            String moviesJsonStr = null;
-//
-//            try {
-//                final String MOVIES_BASE_URL =
-//                    "http://api.themoviedb.org/3/discover/movie?";
-//                final String API_KEY_PARAM = "api_key";
-//                final String YEAR_PARAM = "year";
-//
-//                Uri builtUri = Uri.parse(MOVIES_BASE_URL).buildUpon()
-//                    .appendQueryParameter(API_KEY_PARAM, BuildConfig.MY_MOVIE_DB_API_KEY)
-//                    .appendQueryParameter(YEAR_PARAM, "2015")
-//                    .build();
-//
-//                URL url = new URL(builtUri.toString());
-//
-//                urlConnection = (HttpURLConnection) url.openConnection();
-//                urlConnection.setRequestMethod("GET");
-//                urlConnection.connect();
-//
-//                // Read the input stream into a String
-//                InputStream inputStream = urlConnection.getInputStream();
-//                StringBuffer buffer = new StringBuffer();
-//                if (inputStream == null) {
-//                    // Nothing to do.
-//                    return null;
-//                }
-//                reader = new BufferedReader(new InputStreamReader(inputStream));
-//
-//                String line;
-//                while ((line = reader.readLine()) != null) {
-//                    buffer.append(line + "\n");
-//                }
-//
-//                if (buffer.length() == 0) {
-//                    // Stream was empty.  No point in parsing.
-//                    return null;
-//                }
-//                moviesJsonStr = buffer.toString();
-//                Log.v(LOG_TAG, moviesJsonStr);
-//            } catch (IOException e) {
-//                Log.e(LOG_TAG, "Error ", e);
-//                // If the code didn't successfully get the movies data, there's no point in attempting
-//                // to parse it.
-//                return null;
-//            } finally {
-//                if (urlConnection != null) {
-//                    urlConnection.disconnect();
-//                }
-//                if (reader != null) {
-//                    try {
-//                        reader.close();
-//                    } catch (final IOException e) {
-//                        Log.e(LOG_TAG, "Error closing stream", e);
-//                    }
-//                }
-//            }
-//
-//            try {
-//                return getMoviesFromJson(moviesJsonStr);
-//            } catch (JSONException e) {
-//                Log.e(LOG_TAG, e.getMessage(), e);
-//                e.printStackTrace();
-//            }
-//
-//            // This will only happen if there was an error getting or parsing the forecast.
-//            return null;
-//        }
-//
-//        @Override
 //        protected void onPostExecute(Movie[] result) {
 //            if (result != null) {
 //                mAdapter.clear();
@@ -304,18 +209,21 @@ public class MoviesFragment extends Fragment {
 
         private Context context;
 
+        private List<Movie> adapterMovies;
+
         MoviesAdapter(Context context) {
             this.context = context;
+            adapterMovies = new ArrayList();
         }
 
         @Override
         public int getCount() {
-            return Movies.size();
+            return adapterMovies.size();
         }
 
         @Override
         public Movie getItem(int position) {
-            return Movies.get(position);
+            return adapterMovies.get(position);
         }
 
         @Override
@@ -327,7 +235,7 @@ public class MoviesFragment extends Fragment {
         public View getView(int position, View convertView, ViewGroup parent) {
             View gridItem;
 
-            Movie tempMovie = Movies.get(position);
+            Movie tempMovie = adapterMovies.get(position);
             if (convertView == null) {
                 gridItem = LayoutInflater.from(context).inflate(R.layout.grid_item_movie, parent, false);
             } else {
@@ -335,22 +243,25 @@ public class MoviesFragment extends Fragment {
             }
             ImageView moviePoster = (ImageView) gridItem.findViewById(R.id.grid_item_movie_poster);
 
-            int width = mMovieGrid.getMeasuredWidth() / 3;
-            moviePoster.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            moviePoster.setMinimumWidth(width);
-            moviePoster.setMinimumHeight(width);
 
+            moviePoster.setScaleType(ImageView.ScaleType.FIT_CENTER);
             moviePoster.setImageBitmap(tempMovie.getPosterBitmap());
 
             return gridItem;
         }
 
         public void clear() {
-            Movies.clear();
+            adapterMovies.clear();
         }
 
         public void add(Movie movie) {
-            Movies.add(movie);
+            adapterMovies.add(movie);
+        }
+
+        public void addAll(MovieResponse inMovies) {
+            for (Movie movie : inMovies.getMovies()) {
+                add(movie);
+            }
         }
 
     }
@@ -358,8 +269,7 @@ public class MoviesFragment extends Fragment {
     public interface MovieEndpointInterface {
 
         @GET(Constants.MOVIES_URL)
-        Call<MovieResponse> getMovies(@Query("sort_by") String sort, @Query("year") int year);
-
+        Call<MovieResponse> getMovies(@Query("sort_by") String sort);
     }
 
 }

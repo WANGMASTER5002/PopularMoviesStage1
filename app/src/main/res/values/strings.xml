@@ -31,5 +31,6 @@
     <string name="rating_json">vote_average</string>
     <string name="release_date_json">release_date</string>
     <string name="poster_path_json">poster_path</string>
+    <string name="connection_error">Error with internet connection</string>
 
 </resources>
