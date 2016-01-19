@@ -10,6 +10,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
+
 import java.text.SimpleDateFormat;
 
 
@@ -55,7 +57,8 @@ public class MovieDetailActivity extends AppCompatActivity {
             long defaultId = 0;
             if (intent != null && intent.hasExtra("movie Id")) {
                 Long movieId = intent.getLongExtra("movie Id", defaultId);
-//                makeDetailsCall(movieId);
+                mMovie = Movies.getById(movieId);
+                setUpDetailsUI();
             }
 
             return rootView;
@@ -69,7 +72,7 @@ public class MovieDetailActivity extends AppCompatActivity {
             movieSynopsis.setText(mMovie.getOverview());
 
             moviePoster = (ImageView) rootView.findViewById(R.id.movie_details_poster_imageview);
-            moviePoster.setImageBitmap(mMovie.getPosterBitmap());
+            Picasso.with(getContext()).load("http://image.tmdb.org/t/p/w185" + mMovie.getPosterPath()).into(moviePoster);
 
 
             movieRating = (TextView) rootView.findViewById(R.id.movie_details_vote_average_textview);
@@ -77,7 +80,7 @@ public class MovieDetailActivity extends AppCompatActivity {
 
             movieReleaseDate = (TextView) rootView.findViewById(R.id.movie_details_release_date_textview);
             SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy");
-            movieReleaseDate.setText(dateFormat.format(mMovie.getReleaseDate()).toString());
+            movieReleaseDate.setText(mMovie.getReleaseDate());
 
         }
 

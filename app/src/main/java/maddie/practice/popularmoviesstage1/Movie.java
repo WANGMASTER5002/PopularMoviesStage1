@@ -5,7 +5,11 @@ import android.graphics.BitmapFactory;
 import android.util.Log;
 
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 /**
  * Created by Madeline Beyl
@@ -22,7 +26,7 @@ public class Movie {
     private double popularity;
     private String overview;
     private String release_date;
-    private Bitmap mPosterBitmap;
+    private Bitmap bitmap;
 
     public Movie(long id, String title, String poster_path, double vote_average, long popularity, String overview, String release_date) {
         this.id = id;
@@ -32,7 +36,7 @@ public class Movie {
         this.popularity = popularity;
         this.overview = overview;
         this.release_date = release_date;
-        mPosterBitmap = setPosterBitmapFromString(poster_path);
+        this.bitmap = getPosterBitmapFromString(poster_path);
     }
 
     public long getId() {
@@ -76,7 +80,18 @@ public class Movie {
     }
 
     public String getReleaseDate() {
-        return release_date;
+        if (release_date.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return new SimpleDateFormat("MMMM dd, yyyy", Locale.US)
+                .format(new SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(release_date));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     public void setReleaseDate(String release_date) {
@@ -91,26 +106,33 @@ public class Movie {
         this.overview = overview;
     }
 
-    public Bitmap setPosterBitmapFromString(String path){
+    public Bitmap getPosterBitmapFromString(String path){
 
         if(path == null) {
             return null;
         } else {
-            String url = "http://image.tmdb.org/t/p/w185/" + path;
+            String urlString = "https://image.tmdb.org/t/p/w185" + path;
             Bitmap poster = null;
 
             try {
-                poster = BitmapFactory.decodeStream((InputStream) new URL(url).getContent());
+                URL url = new URL(urlString);
+                HttpURLConnection connection  = (HttpURLConnection) url.openConnection();
+                InputStream is = connection.getInputStream();
+                poster = BitmapFactory.decodeStream(is);
             } catch (Exception e) {
-                Log.e(LOG_TAG, e.getMessage());
+                Log.e(LOG_TAG, e.toString());
             }
 
             return poster;
         }
     }
 
-    public Bitmap getPosterBitmap() {
-        return mPosterBitmap;
+    public Bitmap getBitmap() {
+        return bitmap;
+    }
+
+    public void setBitmap(Bitmap bitmap) {
+        this.bitmap = bitmap;
     }
 
     public String toString() {

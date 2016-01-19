@@ -34,6 +34,15 @@ public class Movies {
 
     }
 
+    public static Movie getById(Long movieId) {
+        for (Movie movie : movies) {
+            if (movie.getId() == movieId) {
+                return movie;
+            }
+        }
+        return null;
+    }
+
     public static void clear() { movies.clear(); }
 
     public static int size() { return movies.size(); }

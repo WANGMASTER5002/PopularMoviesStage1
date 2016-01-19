@@ -16,8 +16,7 @@ import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.squareup.picasso.Picasso;
 
 import retrofit.Call;
 import retrofit.Callback;
@@ -64,16 +63,12 @@ public class MoviesFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
         Bundle savedInstanceState) {
 
-        mAdapter = new MoviesAdapter(getContext());
-
         View rootView = inflater.inflate(R.layout.fragment_movies, container, false);
 
         mPageLoading = rootView.findViewById(R.id.page_loading);
-//        mPageLoading.bringToFront();
+        mPageLoading.bringToFront();
 
-        // Get a reference to the GridView, and attach this adapter to it.
         mMovieGrid = (GridView) rootView.findViewById(R.id.gridview_movies);
-        mMovieGrid.setAdapter(mAdapter);
         mMovieGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
@@ -128,16 +123,13 @@ public class MoviesFragment extends Fragment {
 
                 Movies.addAll(movieResponse);
 
-                mAdapter.clear();
-                mAdapter.addAll(movieResponse);
-                mAdapter.notifyDataSetChanged();
+                mAdapter = new MoviesAdapter(getContext(), movieResponse);
                 mMovieGrid.setAdapter(mAdapter);
 
                 mPageLoading.setVisibility(View.GONE);
                 mMovieGrid.setClickable(true);
 
             }
-
 
             @Override
             public void onFailure(Throwable t) {
@@ -208,21 +200,21 @@ public class MoviesFragment extends Fragment {
 
         private Context context;
 
-        private List<Movie> adapterMovies;
+        private MovieResponse adapterMovies;
 
-        MoviesAdapter(Context context) {
+        MoviesAdapter(Context context, MovieResponse response) {
             this.context = context;
-            adapterMovies = new ArrayList();
+            adapterMovies = response;
         }
 
         @Override
         public int getCount() {
-            return adapterMovies.size();
+            return adapterMovies.getMovies().size();
         }
 
         @Override
         public Movie getItem(int position) {
-            return adapterMovies.get(position);
+            return adapterMovies.getMovies().get(position);
         }
 
         @Override
@@ -234,7 +226,8 @@ public class MoviesFragment extends Fragment {
         public View getView(int position, View convertView, ViewGroup parent) {
             View gridItem;
 
-            Movie tempMovie = adapterMovies.get(position);
+            Movie tempMovie = adapterMovies.getMovies().get(position);
+
             if (convertView == null) {
                 gridItem = LayoutInflater.from(context).inflate(R.layout.grid_item_movie, parent, false);
             } else {
@@ -242,19 +235,22 @@ public class MoviesFragment extends Fragment {
             }
             ImageView moviePoster = (ImageView) gridItem.findViewById(R.id.grid_item_movie_poster);
 
-
+            int width = mMovieGrid.getMeasuredWidth() / 3;
             moviePoster.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            moviePoster.setImageBitmap(tempMovie.getPosterBitmap());
+            moviePoster.setMinimumWidth(width);
+            moviePoster.setMinimumHeight(width);
+
+            Picasso.with(context).load("http://image.tmdb.org/t/p/w185" + tempMovie.getPosterPath()).into(moviePoster);
 
             return gridItem;
         }
 
         public void clear() {
-            adapterMovies.clear();
+            adapterMovies.getMovies().clear();
         }
 
         public void add(Movie movie) {
-            adapterMovies.add(movie);
+            adapterMovies.getMovies().add(movie);
         }
 
         public void addAll(MovieResponse inMovies) {
