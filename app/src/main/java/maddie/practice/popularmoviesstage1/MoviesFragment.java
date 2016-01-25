@@ -3,6 +3,8 @@ package maddie.practice.popularmoviesstage1;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -49,14 +51,15 @@ public class MoviesFragment extends Fragment {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
         prefs.registerOnSharedPreferenceChangeListener(
-            new SharedPreferences
-                .OnSharedPreferenceChangeListener() {
-                @Override
-                public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-                    mAdapter.clear();
-                    updateMovies();
-                }
-            });
+                new SharedPreferences
+                        .OnSharedPreferenceChangeListener() {
+                    @Override
+                    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+                        String sortPref = sharedPreferences.getString(getString(R.string.pref_sort_key),
+                                getString(R.string.pref_sort_default));
+                        Movies.sortMovies(sortPref);
+                    }
+                });
     }
 
     @Override
@@ -66,7 +69,7 @@ public class MoviesFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_movies, container, false);
 
         mPageLoading = rootView.findViewById(R.id.page_loading);
-        mPageLoading.bringToFront();
+        //mPageLoading.bringToFront();
 
         mMovieGrid = (GridView) rootView.findViewById(R.id.gridview_movies);
         mMovieGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -75,7 +78,7 @@ public class MoviesFragment extends Fragment {
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
                 Movie movie = mAdapter.getItem(position);
                 Intent intent = new Intent(getActivity(), MovieDetailActivity.class)
-                    .putExtra("movie Id", movie.getId());
+                        .putExtra("movie Id", movie.getId());
                 startActivity(intent);
             }
         });
@@ -86,12 +89,14 @@ public class MoviesFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
+        //TODO: only reload when needed
         updateMovies();
     }
 
 
     public void updateMovies() {
 
+        mPageLoading.setVisibility(View.VISIBLE);
         mMovieGrid.setClickable(false);
 
         Retrofit retrofit = new Retrofit.Builder()
@@ -143,57 +148,7 @@ public class MoviesFragment extends Fragment {
     }
 
 
-//
-//        protected Movie[] sortMovies(Movie[] originalMovies, String sortOrder) {
-//
-//            //TODO take out hard coding
-//            switch (sortOrder) {
-//                case "popularity.desc":
-//                    Arrays.sort(originalMovies, new Comparator<Movie>() {
-//                        @Override
-//                        public int compare(Movie lhs, Movie rhs) {
-//                            if (lhs.getPopularity() > rhs.getPopularity()) {
-//                                return -1;
-//                            } else {
-//                                return 1;
-//                            }
-//                        }
-//                    });
-//                    break;
-//                case "vote_average.desc":
-//                    Arrays.sort(originalMovies, new Comparator<Movie>() {
-//                        @Override
-//                        public int compare(Movie lhs, Movie rhs) {
-//                            if (lhs.getVoteAverage() > rhs.getVoteAverage()) {
-//                                return -1;
-//                            } else {
-//                                return 1;
-//                            }
-//                        }
-//                    });
-//                    break;
-//                default:
-//                    break;
-//            }
-//
-//            return originalMovies;
-//        }
-//
-//        @Override
-//        protected void onPostExecute(Movie[] result) {
-//            if (result != null) {
-//                mAdapter.clear();
-//                Log.v(LOG_TAG, result.toString());
-//                for (Movie movie : result) {
-//                    mAdapter.add(movie);
-//                }
-//                mMovieGrid.setAdapter(mAdapter);
-//            }
-//            mPageLoading.setVisibility(View.GONE);
-//            mMovieGrid.setClickable(true);
-//
-//        }
-//    }
+
 
 
     private class MoviesAdapter extends BaseAdapter {
@@ -240,7 +195,13 @@ public class MoviesFragment extends Fragment {
             moviePoster.setMinimumWidth(width);
             moviePoster.setMinimumHeight(width);
 
-            Picasso.with(context).load("http://image.tmdb.org/t/p/w185" + tempMovie.getPosterPath()).into(moviePoster);
+            if(tempMovie.getPosterPath() != null) {
+                Picasso.with(context).load("http://image.tmdb.org/t/p/w185" + tempMovie.getPosterPath()).into(moviePoster);
+            } else {
+                Bitmap noPoster = BitmapFactory.decodeResource(getResources(), R.drawable.no_poster);
+                //TODO: get this to look cleaner
+               // moviePoster.setImageBitmap(noPoster);
+            }
 
             return gridItem;
         }

@@ -1,6 +1,9 @@
 package maddie.practice.popularmoviesstage1;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -48,5 +51,40 @@ public class Movies {
     public static int size() { return movies.size(); }
 
     public static Movie get(int position) { return movies.get(position); }
+
+    public static void sortMovies(String sortOrder) {
+
+        //TODO take out hard coding
+        switch (sortOrder) {
+            case "popularity.desc":
+                Collections.sort(getMovies(), new Comparator<Movie>() {
+                    @Override
+                    public int compare(Movie lhs, Movie rhs) {
+                        if (lhs.getPopularity() > rhs.getPopularity()) {
+                            return -1;
+                        } else {
+                            return 1;
+                        }
+                    }
+                });
+                break;
+            case "vote_average.desc":
+                Collections.sort(getMovies(), new Comparator<Movie>() {
+                    @Override
+                    public int compare(Movie lhs, Movie rhs) {
+                        if (lhs.getVoteAverage() > rhs.getVoteAverage()) {
+                            return -1;
+                        } else {
+                            return 1;
+                        }
+                    }
+                });
+                break;
+            default:
+                break;
+        }
+
+    }
+
 
 }
